@@ -385,6 +385,28 @@
 
   </div><!-- /stage -->
 
+  <div id="pin-popup" class="pin-popup" hidden>
+    <img class="pin-popup-thumb" src="" alt="">
+    <div class="pin-popup-info">
+      <div class="pin-popup-name"></div>
+      <div class="pin-popup-meta">
+        <span class="pin-popup-score"></span>
+        <img class="pin-popup-star" src="assets/star.svg" width="14" height="14" alt="">
+        <span class="pin-popup-reviews"></span>
+      </div>
+    </div>
+    <div class="pin-popup-summary-box" hidden>
+      <div class="pin-popup-skeleton">
+        <div class="skel-line skel-long"></div>
+        <div class="skel-line skel-long"></div>
+        <div class="skel-line skel-short"></div>
+      </div>
+      <p class="pin-popup-desc" hidden></p>
+      <span class="pin-popup-gemini">✦ Gemini</span>
+    </div>
+    <button class="pin-popup-add" onclick="pinPopupAdd()">Add</button>
+  </div>
+
   <script src="data.js"></script>
   <script src="app.js"></script>
   <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>

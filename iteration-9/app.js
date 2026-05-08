@@ -57,7 +57,15 @@ let bookmarkMarkers        = [];
 let isDraggingBookmark     = false;
 let draggingBookmarkSpot   = null;
 let bookmarkGhost          = null;
+let pinPopupSpot           = null;
+let pinPopupTimers         = [];
 let categoryMarkers        = { hotels: [], restaurants: [], scenic: [] };
+
+const PLACE_DESCRIPTIONS = {
+  hotels:      'A well-reviewed stay with easy access to local attractions, comfortable rooms, and attentive service.',
+  restaurants: 'A local favourite known for fresh ingredients, great ambience, and dishes worth going out of your way for.',
+  scenic:      'A standout viewpoint or natural spot — the kind of place that makes the detour feel completely worth it.',
+};
 let selectedPlaces         = [];   // current render's places
 let generationSeed         = 0;    // changes each submission → different Unsplash images
 
@@ -261,6 +269,12 @@ function addPlaceToBookmarks(spotId) {
   const marker = createSingleBookmarkMarker(spot, true);
   bookmarkMarkers.push(marker);
 
+  const areaIdx = areaSpotMarkers.findIndex(m => m.spotId === spotId);
+  if (areaIdx !== -1) {
+    areaSpotMarkers[areaIdx].setMap(null);
+    areaSpotMarkers.splice(areaIdx, 1);
+  }
+
   document.querySelectorAll(`.add-btn[data-spot-id="${spotId}"]`).forEach(btn => {
     btn.textContent = 'Added';
     btn.disabled    = true;
@@ -315,6 +329,7 @@ function createSingleBookmarkMarker(spot, visible) {
     zIndex: 15,
   });
   google.maps.event.addListener(marker, 'mousedown', e => startBookmarkDrag(spot, e.domEvent));
+  marker.addListener('click', e => showPinPopup(spot, e.domEvent.clientX, e.domEvent.clientY));
   return marker;
 }
 
@@ -382,6 +397,82 @@ document.addEventListener('mouseup', e => {
   draggingBookmarkSpot = null;
 });
 
+function clearPinPopupTimers() {
+  pinPopupTimers.forEach(clearTimeout);
+  pinPopupTimers = [];
+}
+
+function typewriteText(el, text, i = 0) {
+  if (!pinPopupSpot) return;
+  el.textContent = text.slice(0, i);
+  if (i < text.length) pinPopupTimers.push(setTimeout(() => typewriteText(el, text, i + 1), 16));
+}
+
+function showPinPopup(spot, clientX, clientY) {
+  const popup = document.getElementById('pin-popup');
+  if (!popup) return;
+
+  clearPinPopupTimers();
+
+  popup.querySelector('.pin-popup-thumb').src             = spot.photo || '';
+  popup.querySelector('.pin-popup-name').textContent      = spot.name;
+  popup.querySelector('.pin-popup-score').textContent     = spot.rating;
+  popup.querySelector('.pin-popup-reviews').textContent   = `(${spot.reviews.toLocaleString()})`;
+
+  const summaryBox   = popup.querySelector('.pin-popup-summary-box');
+  const skeleton     = popup.querySelector('.pin-popup-skeleton');
+  const desc         = popup.querySelector('.pin-popup-desc');
+  const geminiLabel  = popup.querySelector('.pin-popup-gemini');
+
+  summaryBox.setAttribute('hidden', '');
+  skeleton.style.display = 'flex';
+  desc.hidden            = true;
+  desc.textContent       = '';
+  geminiLabel.textContent = '✦ Gemini ...';
+
+  const addBtn = popup.querySelector('.pin-popup-add');
+  const already = bookmarkedSpots.find(s => s.id === spot.id);
+  addBtn.textContent = already ? 'Added' : 'Add';
+  addBtn.disabled    = !!already;
+
+  const w = 240, h = 380;
+  const left = Math.min(Math.max(clientX - w - 16, 8), window.innerWidth  - w - 8);
+  const top  = Math.min(Math.max(clientY - h / 2,  8), window.innerHeight - h - 8);
+  popup.style.left = left + 'px';
+  popup.style.top  = top  + 'px';
+
+  pinPopupSpot = spot;
+  popup.removeAttribute('hidden');
+
+  // Phase 2: skeleton appears
+  pinPopupTimers.push(setTimeout(() => {
+    summaryBox.removeAttribute('hidden');
+  }, 380));
+
+  // Phase 3: text types in
+  const description = PLACE_DESCRIPTIONS[spot.category] || PLACE_DESCRIPTIONS.scenic;
+  pinPopupTimers.push(setTimeout(() => {
+    skeleton.style.display  = 'none';
+    desc.hidden             = false;
+    geminiLabel.textContent = '✦ Gemini';
+    typewriteText(desc, description);
+  }, 1650));
+}
+
+function hidePinPopup() {
+  clearPinPopupTimers();
+  const popup = document.getElementById('pin-popup');
+  if (popup) popup.setAttribute('hidden', '');
+  pinPopupSpot = null;
+}
+
+function pinPopupAdd() {
+  if (!pinPopupSpot) return;
+  addPlaceToBookmarks(pinPopupSpot.id);
+  const addBtn = document.querySelector('.pin-popup-add');
+  if (addBtn) { addBtn.textContent = 'Added'; addBtn.disabled = true; }
+}
+
 function syncBookmarkMarkers() {
   bookmarkMarkers.forEach(m => m.setMap(map));
 }
@@ -421,6 +512,7 @@ window.initMap = function () {
     pendingCategoryRender = null;
   }
   createBookmarkMarkers(bookmarkedSpots);
+  map.addListener('click', hidePinPopup);
 };
 
 /* ═══════════════════════════════════════════════
@@ -864,6 +956,8 @@ function addAreaPinsForPlaces(places) {
       title:  place.name,
       zIndex: 20,
     });
+    marker.spotId = place.id;
+    marker.addListener('click', e => showPinPopup(place, e.domEvent.clientX, e.domEvent.clientY));
     areaSpotMarkers.push(marker);
   });
 }
@@ -876,6 +970,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') clearDrawing
 
 function clearDrawing() {
   if (drawnPolygon) { drawnPolygon.setMap(null); drawnPolygon = null; }
+  areaSpotMarkers.forEach(m => m.setMap(null));
+  areaSpotMarkers = [];
+  hidePinPopup();
   hideMapBar();
   if (drawMode) exitDrawMode();
 }
