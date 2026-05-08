@@ -54,6 +54,9 @@ let drawListeners          = [];
 let areaSpotMarkers        = [];
 let bookmarkedSpots        = [];
 let bookmarkMarkers        = [];
+let isDraggingBookmark     = false;
+let draggingBookmarkSpot   = null;
+let bookmarkGhost          = null;
 let categoryMarkers        = { hotels: [], restaurants: [], scenic: [] };
 let selectedPlaces         = [];   // current render's places
 let generationSeed         = 0;    // changes each submission → different Unsplash images
@@ -255,7 +258,7 @@ function addPlaceToBookmarks(spotId) {
   bookmarkedSpots.push({ ...spot, distance: null });
   refreshBookmarkList();
 
-  const marker = createSingleBookmarkMarker(spot, document.body.dataset.tab === 'bookmark');
+  const marker = createSingleBookmarkMarker(spot, true);
   bookmarkMarkers.push(marker);
 
   document.querySelectorAll(`.add-btn[data-spot-id="${spotId}"]`).forEach(btn => {
@@ -291,8 +294,7 @@ function createBookmarkMarkers(spots) {
   bookmarkMarkers.forEach(m => m.setMap(null));
   bookmarkMarkers = [];
   if (!map || !mapReady) return;
-  const show = document.body.dataset.tab === 'bookmark';
-  spots.forEach(spot => bookmarkMarkers.push(createSingleBookmarkMarker(spot, show)));
+  spots.forEach(spot => bookmarkMarkers.push(createSingleBookmarkMarker(spot, true)));
 }
 
 function createSingleBookmarkMarker(spot, visible) {
@@ -301,7 +303,7 @@ function createSingleBookmarkMarker(spot, visible) {
           fill="#FBBC04" stroke="white" stroke-width="1.5"/>
     <path d="M11.5 7h9v14l-4.5-3.5L11.5 21V7z" fill="white"/>
   </svg>`;
-  return new google.maps.Marker({
+  const marker = new google.maps.Marker({
     position: { lat: spot.lat, lng: spot.lng },
     map: visible ? map : null,
     icon: {
@@ -312,11 +314,76 @@ function createSingleBookmarkMarker(spot, visible) {
     title:  spot.name,
     zIndex: 15,
   });
+  google.maps.event.addListener(marker, 'mousedown', e => startBookmarkDrag(spot, e.domEvent));
+  return marker;
 }
 
+function startBookmarkDrag(spot, domEvent) {
+  isDraggingBookmark   = true;
+  draggingBookmarkSpot = spot;
+  map.setOptions({ draggable: false, gestureHandling: 'none' });
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40">
+    <path d="M16 0C9.373 0 4 5.373 4 12c0 9.5 12 28 12 28S28 21.5 28 12C28 5.373 22.627 0 16 0z"
+          fill="#FBBC04" stroke="white" stroke-width="1.5"/>
+    <path d="M11.5 7h9v14l-4.5-3.5L11.5 21V7z" fill="white"/>
+  </svg>`;
+
+  bookmarkGhost = document.createElement('div');
+  bookmarkGhost.id = 'bookmark-ghost';
+  bookmarkGhost.innerHTML = svg;
+  bookmarkGhost.style.left = (domEvent.clientX - 16) + 'px';
+  bookmarkGhost.style.top  = (domEvent.clientY - 40) + 'px';
+  document.body.appendChild(bookmarkGhost);
+}
+
+function getDropIndex(list, clientY) {
+  const rows = [...list.querySelectorAll('.route-stop-row')];
+  for (let i = 0; i < rows.length; i++) {
+    const rect = rows[i].getBoundingClientRect();
+    if (clientY < rect.top + rect.height / 2) return i;
+  }
+  return rows.length;
+}
+
+document.addEventListener('mousemove', e => {
+  if (!isDraggingBookmark || !bookmarkGhost) return;
+  bookmarkGhost.style.left = (e.clientX - 16) + 'px';
+  bookmarkGhost.style.top  = (e.clientY - 40) + 'px';
+  const list = document.getElementById('routeStopsList');
+  if (!list) return;
+  const r = list.getBoundingClientRect();
+  const over = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  list.classList.toggle('drop-active', over);
+});
+
+document.addEventListener('mouseup', e => {
+  if (!isDraggingBookmark) return;
+
+  map.setOptions({ draggable: true, gestureHandling: 'auto' });
+  if (bookmarkGhost) { bookmarkGhost.remove(); bookmarkGhost = null; }
+
+  const list = document.getElementById('routeStopsList');
+  if (list) {
+    list.classList.remove('drop-active');
+    const r = list.getBoundingClientRect();
+    const overList = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (overList && draggingBookmarkSpot) {
+      const spot  = draggingBookmarkSpot;
+      const index = getDropIndex(list, e.clientY);
+      activeStops.splice(index, 0, { num: index + 1, name: spot.name, lat: spot.lat, lng: spot.lng });
+      activeStops.forEach((s, i) => s.num = i + 1);
+      populateRouteStopsUI(activeStops);
+      if (mapReady) drawRoute();
+    }
+  }
+
+  isDraggingBookmark   = false;
+  draggingBookmarkSpot = null;
+});
+
 function syncBookmarkMarkers() {
-  const show = document.body.dataset.tab === 'bookmark';
-  bookmarkMarkers.forEach(m => m.setMap(show ? map : null));
+  bookmarkMarkers.forEach(m => m.setMap(map));
 }
 
 function removeBookmark(spotId) {
@@ -418,6 +485,13 @@ function makePinSvg(label, bg, fg) {
     if (dragging) dragging.classList.remove('is-dragging');
     dragging = null;
     list.querySelectorAll('.route-stop-row').forEach(r => r.classList.remove('drag-over-above', 'drag-over-below'));
+    const rows = [...list.querySelectorAll('.route-stop-row')];
+    activeStops = rows
+      .map(row => activeStops[+row.dataset.stopIndex])
+      .filter(Boolean)
+      .map((s, i) => ({ ...s, num: i + 1 }));
+    populateRouteStopsUI(activeStops);
+    if (mapReady) drawRoute();
   });
 
   list.addEventListener('dragover', e => {
@@ -518,8 +592,8 @@ function loadSavedTrip(tripId) {
 function populateRouteStopsUI(stops) {
   const list = document.getElementById('routeStopsList');
   if (!list) return;
-  list.innerHTML = stops.map(stop => `
-    <div class="route-stop-row" draggable="true">
+  list.innerHTML = stops.map((stop, i) => `
+    <div class="route-stop-row" draggable="true" data-stop-index="${i}">
       <div class="stop-icon-col">
         <div class="stop-dot"></div>
         <span class="material-symbols-rounded stop-pin">location_on</span>

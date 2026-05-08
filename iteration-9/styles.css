@@ -1313,3 +1313,18 @@ body[data-state="plan"][data-drawing="on"] .draw-hint {
   cursor: default;
   pointer-events: none;
 }
+
+/* Bookmark drag ghost */
+#bookmark-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.85;
+}
+
+/* Route list drop zone highlight */
+#routeStopsList.drop-active {
+  outline: 2px solid #1a73e8;
+  border-radius: 8px;
+  background: rgba(26, 115, 232, 0.04);
+}
