@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iteration 9 — Gemini Trip Planner</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+</head>
+<body data-state="landing" data-tab="plan-ai" data-drawing="off">
+
+  <!-- ── Nav Rail ── -->
+  <nav class="rail">
+    <div class="rail-logo" onclick="goHome()">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="14" r="14" fill="#EA4335"/>
+        <path d="M14 7C10.134 7 7 10.134 7 14c0 2.556 1.351 4.796 3.374 6.046L14 25l3.626-4.954C19.649 18.796 21 16.556 21 14c0-3.866-3.134-7-7-7zm0 9.5A2.5 2.5 0 1 1 14 11.5a2.5 2.5 0 0 1 0 5z" fill="white"/>
+      </svg>
+    </div>
+
+    <div class="rail-items">
+      <button class="rail-item" title="Menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+      <button class="rail-item active" title="Road trip">
+        <span class="material-symbols-rounded">route</span>
+        <span class="rail-label">Road trip</span>
+      </button>
+      <button class="rail-item" title="Saved">
+        <span class="material-symbols-rounded">bookmark</span>
+        <span class="rail-label">Saved</span>
+      </button>
+      <button class="rail-item" title="Recent">
+        <span class="material-symbols-rounded">history</span>
+        <span class="rail-label">Recent</span>
+      </button>
+    </div>
+
+    <div class="rail-bottom">
+      <button class="rail-item" title="Get app">
+        <span class="material-symbols-rounded">install_mobile</span>
+        <span class="rail-label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Stage (everything except rail) ── -->
+  <div class="stage">
+
+    <!-- Landing screen -->
+    <div class="landing">
+      <div class="landing-center">
+
+        <!-- Gemini spark icon (actual Figma asset) -->
+        <div class="spark-icon">
+          <img src="assets/gemini-spark.png" alt="Gemini" class="spark-img">
+        </div>
+
+        <h1 class="landing-heading">Hey Rakshit, where do you want to go today?</h1>
+
+        <!-- Prompt card -->
+        <div class="prompt-card">
+          <textarea class="prompt-textarea" rows="3" id="promptInput">Explore Seattle on a 2-day road trip, discovering iconic landmarks, vibrant neighborhoods, and scenic views along the way.</textarea>
+          <div class="prompt-actions">
+            <button class="prompt-attach" title="Attach">
+              <span class="material-symbols-rounded">add</span>
+            </button>
+            <div class="prompt-right">
+              <span class="gemini-label">
+                <img src="assets/gemini-spark.png" alt="" class="gemini-spark-sm">
+                Gemini 3.1 Pro
+              </span>
+              <button class="prompt-send" onclick="submitPrompt()" title="Send">
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Past trips -->
+        <h2 class="trips-heading">Planned roadtrips</h2>
+        <div class="trips-grid">
+          <div class="trip-card" onclick="loadSavedTrip('seattle')">
+            <img class="trip-thumb" src="assets/seattle-trip.png" alt="Seattle day trip">
+            <div class="trip-meta">
+              <div class="trip-info">
+                <p class="trip-name">Seattle day trip</p>
+                <p class="trip-time">2hrs ago</p>
+              </div>
+              <div class="trip-avatars">
+                <img class="trip-avatar-img" src="assets/avatar-1.png" alt="">
+                <img class="trip-avatar-img" src="assets/avatar-2.png" alt="">
+              </div>
+            </div>
+          </div>
+          <div class="trip-card" onclick="loadSavedTrip('chicago')">
+            <img class="trip-thumb" src="assets/chicago-trip.png" alt="Chicago weekend trip">
+            <div class="trip-meta">
+              <div class="trip-info">
+                <p class="trip-name">Chicago weekend trip</p>
+                <p class="trip-time">2hrs ago</p>
+              </div>
+              <div class="trip-avatars">
+                <img class="trip-avatar-img" src="assets/avatar-2.png" alt="">
+                <img class="trip-avatar-img" src="assets/avatar-3.png" alt="">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <p class="landing-disclaimer">Gemini can make mistakes</p>
+    </div>
+
+    <!-- Generating overlay -->
+    <div class="generating-overlay">
+      <div class="gen-card">
+        <img src="assets/gemini-spark.png" alt="Gemini" class="gen-spark-img">
+        <p class="gen-label">Planning your trip…</p>
+        <div class="gen-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Left panel -->
+    <div class="panel">
+      <!-- Tab bar -->
+      <div class="panel-tabs">
+        <button class="tab-btn active" data-tab="plan-ai">Plan AI</button>
+        <button class="tab-btn" data-tab="route">Route</button>
+        <button class="tab-btn" data-tab="bookmark">Bookmark</button>
+      </div>
+
+      <!-- Tab content area -->
+      <div class="panel-body">
+
+        <!-- Plan AI tab -->
+        <div class="tab-content" data-tab-content="plan-ai">
+          <div class="chat-messages" id="chatMessages"></div>
+        </div>
+
+        <!-- Route tab -->
+        <div class="tab-content" data-tab-content="route">
+
+          <!-- Locations list -->
+          <div class="route-locations-list" id="routeStopsList">
+            <div class="route-stop-row" draggable="true">
+              <div class="stop-icon-col">
+                <div class="stop-dot"></div>
+                <span class="material-symbols-rounded stop-pin">location_on</span>
+              </div>
+              <div class="stop-pill">U-district</div>
+              <span class="material-symbols-rounded stop-drag">drag_indicator</span>
+            </div>
+            <div class="route-stop-row" draggable="true">
+              <div class="stop-icon-col">
+                <div class="stop-dot"></div>
+                <span class="material-symbols-rounded stop-pin">location_on</span>
+              </div>
+              <div class="stop-pill">Redmond</div>
+              <span class="material-symbols-rounded stop-drag">drag_indicator</span>
+            </div>
+            <div class="route-stop-row" draggable="true">
+              <div class="stop-icon-col">
+                <div class="stop-dot"></div>
+                <span class="material-symbols-rounded stop-pin">location_on</span>
+              </div>
+              <div class="stop-pill">Capitol Hill</div>
+              <span class="material-symbols-rounded stop-drag">drag_indicator</span>
+            </div>
+            <div class="route-stop-row" draggable="true">
+              <div class="stop-icon-col">
+                <div class="stop-dot"></div>
+                <span class="material-symbols-rounded stop-pin">location_on</span>
+              </div>
+              <div class="stop-pill">Bellevue</div>
+              <span class="material-symbols-rounded stop-drag">drag_indicator</span>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="route-section-divider"></div>
+
+          <!-- Route info -->
+          <div class="route-info-card">
+            <div class="route-info-main">
+              <span class="material-symbols-rounded route-car-icon">directions_car</span>
+              <div class="route-details">
+                <div class="route-detail-row">
+                  <span class="route-via">via I-5 N</span>
+                  <span class="route-time-badge">53 min</span>
+                </div>
+                <div class="route-detail-row">
+                  <span class="route-desc">Fastest route, the usual traffic</span>
+                  <span class="route-miles">23.3 miles</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-action-btns">
+              <button class="route-text-btn">Details</button>
+              <button class="route-text-btn">Preview</button>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="route-section-divider"></div>
+
+          <!-- Along the route -->
+          <div class="along-route-header">
+            <h3 class="along-route-title">Along the route</h3>
+          </div>
+
+          <div class="along-route-grid">
+            <div class="route-photo-card">
+              <img src="assets/photo-1.png" alt="Discovery Park">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Discovery Park</p>
+                <div class="route-photo-rating">
+                  <span>4.8</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(432)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/photo-2.png" alt="Deception Pass">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Deception Pass</p>
+                <div class="route-photo-rating">
+                  <span>4.7</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(325)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/photo-3.png" alt="Pike Place Market">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Pike Place Market</p>
+                <div class="route-photo-rating">
+                  <span>4.9</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(891)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/spot-1.png" alt="Deception Pass Bridge">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Deception Pass</p>
+                <div class="route-photo-rating">
+                  <span>4.7</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(123)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/spot-2.png" alt="Cannon Beach">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Cannon Beach</p>
+                <div class="route-photo-rating">
+                  <span>4.8</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(98)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/photo-1.png" alt="Kerry Park">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Kerry Park</p>
+                <div class="route-photo-rating">
+                  <span>4.6</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(267)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/photo-2.png" alt="Chihuly Garden">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Chihuly Garden</p>
+                <div class="route-photo-rating">
+                  <span>4.7</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(512)</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-photo-card">
+              <img src="assets/photo-3.png" alt="Olympic Sculpture Park">
+              <div class="route-photo-overlay"></div>
+              <div class="route-photo-info">
+                <p class="route-photo-name">Olympic Sculpture Park</p>
+                <div class="route-photo-rating">
+                  <span>4.5</span>
+                  <span class="material-symbols-rounded">star</span>
+                  <span>(188)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bookmark tab -->
+        <div class="tab-content" data-tab-content="bookmark">
+          <div class="bookmark-list" id="bookmarkList"></div>
+        </div>
+
+      </div>
+
+      <!-- Footer with chat input -->
+      <div class="panel-footer">
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" placeholder="Tell me more …" id="chatInputField">
+          <button class="chat-send-btn" onclick="handleChatSend()" title="Send">
+            <span class="material-symbols-rounded">arrow_upward</span>
+          </button>
+        </div>
+        <p class="panel-disclaimer">Gemini can make mistakes</p>
+      </div>
+    </div>
+
+    <!-- Top-right bar -->
+    <div class="topbar">
+      <button class="share-btn">
+        <span class="material-symbols-rounded">share</span>
+        Share
+      </button>
+      <img src="assets/avatar-1.png" alt="Rakshit" class="topbar-avatar">
+    </div>
+
+    <!-- Right tool clusters -->
+    <div class="tools">
+      <div class="tool-cluster">
+        <button class="tool-btn" id="lassoBtn" onclick="toggleDrawMode()" title="Draw area">
+          <span class="material-symbols-rounded">highlight_alt</span>
+        </button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" title="Edit">
+          <span class="material-symbols-rounded">edit</span>
+        </button>
+      </div>
+      <div class="tool-cluster">
+        <button class="tool-btn" title="Add stop">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" title="Remove stop">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Draw mode hint -->
+    <div class="draw-hint">Draw a shape on the map to search that area</div>
+
+    <!-- Floating map search bar -->
+    <div class="map-bar" id="mapBar">
+      <img src="assets/gemini-spark.png" alt="" class="map-bar-spark">
+      <input
+        type="text"
+        class="map-bar-input"
+        id="mapBarInput"
+        placeholder="Tell Gemini more about your trip…"
+        autocomplete="off">
+      <button class="map-bar-send" onclick="handleMapBarSend()" title="Send">
+        <span class="material-symbols-rounded">arrow_upward</span>
+      </button>
+    </div>
+
+  </div><!-- /stage -->
+
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

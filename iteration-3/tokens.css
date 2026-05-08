@@ -1,0 +1,171 @@
+:root {
+  /* ── Palette primitives ── */
+  --palette-blue-50: #e8f0fe;
+  --palette-blue-500: #1a73e8;
+  --palette-blue-600: #1967d2;
+  --palette-blue-700: #185abc;
+  --palette-green-500: #34a853;
+  --palette-green-700: #188038;
+  --palette-yellow-500: #fbbc04;
+  --palette-yellow-700: #b06000;
+  --palette-red-500: #ea4335;
+  --palette-red-700: #c5221f;
+  --palette-neutral-0: #ffffff;
+  --palette-neutral-50: #f8f9fa;
+  --palette-neutral-100: #f1f3f4;
+  --palette-neutral-200: #e8eaed;
+  --palette-neutral-300: #dadce0;
+  --palette-neutral-500: #9aa0a6;
+  --palette-neutral-700: #5f6368;
+  --palette-neutral-800: #3c4043;
+  --palette-neutral-900: #202124;
+  --palette-neutral-1000: #000000;
+
+  /* ── Surface ── */
+  --color-surface-canvas: var(--palette-neutral-50);
+  --color-surface-raised: var(--palette-neutral-0);
+  --color-surface-overlay: var(--palette-neutral-0);
+  --color-surface-sunken: var(--palette-neutral-100);
+  --color-surface-scrim: rgba(0, 0, 0, 0.5);
+
+  /* ── Text ── */
+  --color-text-primary: var(--palette-neutral-900);
+  --color-text-secondary: var(--palette-neutral-700);
+  --color-text-tertiary: var(--palette-neutral-500);
+  --color-text-disabled: var(--palette-neutral-500);
+  --color-text-on-accent: var(--palette-neutral-0);
+  --color-text-link: var(--palette-blue-700);
+
+  /* ── Action ── */
+  --color-action-primary: var(--palette-blue-500);
+  --color-action-primary-hover: var(--palette-blue-600);
+  --color-action-primary-pressed: var(--palette-blue-700);
+  --color-action-primary-disabled: var(--palette-neutral-200);
+  --color-action-state-layer-hover: rgba(26, 115, 232, 0.08);
+  --color-action-state-layer-pressed: rgba(26, 115, 232, 0.12);
+
+  /* ── Border ── */
+  --color-border-subtle: var(--palette-neutral-200);
+  --color-border-default: var(--palette-neutral-300);
+  --color-border-strong: var(--palette-neutral-500);
+  --color-border-focus: var(--palette-blue-500);
+
+  /* ── Feedback ── */
+  --color-feedback-success: var(--palette-green-700);
+  --color-feedback-warning: var(--palette-yellow-700);
+  --color-feedback-error: var(--palette-red-700);
+  --color-feedback-info: var(--palette-blue-700);
+  --color-feedback-error-surface: #fce8e6;
+
+  /* ── Map-specific ── */
+  --color-map-route-driving: var(--palette-blue-500);
+  --color-map-route-walking: var(--palette-blue-500);
+  --color-map-route-transit: var(--palette-green-500);
+  --color-map-traffic-light: var(--palette-green-500);
+  --color-map-traffic-moderate: var(--palette-yellow-500);
+  --color-map-traffic-heavy: var(--palette-red-500);
+  --color-map-pin-default: var(--palette-red-500);
+  --color-map-pin-selected: var(--palette-blue-500);
+
+  /* ── Typography ── */
+  --font-family-primary: "Google Sans Text", Roboto, Arial, sans-serif;
+  --font-family-display: "Google Sans", Roboto, Arial, sans-serif;
+  --font-family-mono: "Google Sans Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 36px;
+
+  --font-lh-xs: 16px;
+  --font-lh-sm: 20px;
+  --font-lh-md: 24px;
+  --font-lh-lg: 26px;
+  --font-lh-xl: 28px;
+  --font-lh-2xl: 36px;
+  --font-lh-3xl: 44px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* ── Spacing (4px base) ── */
+  --space-0: 0;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 48px;
+  --space-11: 64px;
+
+  /* ── Radius ── */
+  --radius-none: 0;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 9999px;
+  --radius-circle: 50%;
+
+  /* ── Shadow / Elevation ── */
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --shadow-2: 0 1px 2px rgba(60, 64, 67, 0.3), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+  --shadow-3: 0 4px 8px 3px rgba(60, 64, 67, 0.15), 0 1px 3px rgba(60, 64, 67, 0.3);
+  --shadow-4: 0 6px 10px 4px rgba(60, 64, 67, 0.15), 0 2px 3px rgba(60, 64, 67, 0.3);
+
+  /* ── Z-index ── */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-overlay: 100;
+  --z-sheet: 200;
+  --z-scrim: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-toast: 600;
+
+  /* ── Motion ── */
+  --motion-instant: 100ms;
+  --motion-fast: 200ms;
+  --motion-normal: 300ms;
+  --motion-slow: 500ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ── Icon sizes ── */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 32px;
+
+  /* ── Focus ring ── */
+  --focus-ring-color: var(--color-border-focus);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ── Breakpoints (for reference; used in media queries) ── */
+  --bp-compact: 0;
+  --bp-medium: 600px;
+  --bp-expanded: 905px;
+  --bp-large: 1240px;
+  --bp-xlarge: 1440px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 100ms;
+    --motion-normal: 100ms;
+    --motion-slow: 100ms;
+  }
+}

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Road Trip Planner</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-state="split">
+
+  <!-- ═══════════════ NAV RAIL ═══════════════ -->
+  <nav class="nav-rail">
+    <div class="nav-rail__top">
+      <button class="nav-rail__btn nav-rail__btn--icon-only" data-action="home" aria-label="Map">
+        <span class="material-symbols-rounded">map</span>
+      </button>
+      <button class="nav-rail__btn nav-rail__btn--labeled active" data-action="road-trip" aria-label="Road trip">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">directions_car</span>
+        </span>
+        <span class="nav-rail__label">Road trip</span>
+      </button>
+      <button class="nav-rail__btn nav-rail__btn--labeled" data-action="saved" aria-label="Saved">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">bookmark</span>
+        </span>
+        <span class="nav-rail__label">Saved</span>
+      </button>
+      <button class="nav-rail__btn nav-rail__btn--labeled" data-action="recent" aria-label="Recent">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">history</span>
+        </span>
+        <span class="nav-rail__label">Recent</span>
+      </button>
+      <div class="nav-rail__divider"></div>
+    </div>
+    <div class="nav-rail__bottom">
+      <div class="nav-rail__divider"></div>
+      <button class="nav-rail__btn nav-rail__btn--labeled" data-action="get-app" aria-label="Get app">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">phone_android</span>
+        </span>
+        <span class="nav-rail__label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ LEFT PANEL ═══════════════ -->
+  <aside class="left-panel" data-tab="plan-ai">
+
+    <!-- Tab bar -->
+    <div class="left-panel__tabs">
+      <button class="left-panel__tab active" data-panel-tab="plan-ai">Plan AI</button>
+      <button class="left-panel__tab" data-panel-tab="route">Route</button>
+      <button class="left-panel__tab" data-panel-tab="itinerary">Itinerary</button>
+    </div>
+
+    <!-- ── Tab: Plan AI ── -->
+    <div class="left-panel__content active" data-content="plan-ai">
+      <div class="plan-ai-empty">
+        <div class="plan-ai-empty__icon">
+          <img src="maps-pin.png" alt="Google Maps" width="41" height="41">
+        </div>
+        <p class="plan-ai-empty__title">Hi Rakshit, where next?</p>
+      </div>
+      <div class="plan-ai-messages" hidden></div>
+      <div class="plan-ai-results" hidden>
+        <div class="plan-ai-results__header">
+          <span class="plan-ai-results__label">Plan a stop here</span>
+        </div>
+        <p class="plan-ai-results__sub">Here are a few suggest spots</p>
+        <div class="plan-ai-results__list"></div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Route ── -->
+    <div class="left-panel__content" data-content="route">
+
+      <section class="trip-stops">
+        <div class="trip-stops__list">
+          <div class="stop-row">
+            <div class="stop-row__indicator">
+              <span class="stop-row__dot stop-row__dot--blue"></span>
+              <span class="stop-row__line"></span>
+            </div>
+            <div class="stop-row__info">
+              <span class="stop-row__name">Seattle</span>
+            </div>
+            <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+          </div>
+          <div class="stop-row">
+            <div class="stop-row__indicator">
+              <span class="stop-row__dot stop-row__dot--blue"></span>
+              <span class="stop-row__line"></span>
+            </div>
+            <div class="stop-row__info">
+              <span class="stop-row__name">Everett</span>
+            </div>
+            <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+          </div>
+          <div class="stop-row">
+            <div class="stop-row__indicator">
+              <span class="stop-row__dot stop-row__dot--blue"></span>
+              <span class="stop-row__line"></span>
+            </div>
+            <div class="stop-row__info">
+              <span class="stop-row__name">Bellingham</span>
+            </div>
+            <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+          </div>
+          <div class="stop-row stop-row--last">
+            <div class="stop-row__indicator">
+              <span class="material-symbols-rounded stop-row__pin">location_on</span>
+            </div>
+            <div class="stop-row__info">
+              <span class="stop-row__name">Portland</span>
+            </div>
+            <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="panel-divider"></div>
+
+      <section class="route-summary">
+        <div class="route-summary__info">
+          <span class="material-symbols-rounded route-summary__icon">directions_car</span>
+          <div class="route-summary__details">
+            <div class="route-summary__row">
+              <span class="route-summary__via">via I-5 N</span>
+              <span class="route-summary__time">53 min</span>
+            </div>
+            <div class="route-summary__row">
+              <span class="route-summary__traffic">Fastest route, the usual traffic</span>
+              <span class="route-summary__distance">23.3 miles</span>
+            </div>
+          </div>
+        </div>
+        <div class="route-summary__actions">
+          <button class="route-summary__btn">Details</button>
+          <button class="route-summary__btn">Preview</button>
+        </div>
+      </section>
+
+      <div class="panel-divider"></div>
+
+      <h2 class="explore-heading">Along the route</h2>
+
+      <div class="explore-grid">
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/colosseum/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/stclair2/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/pikeplace/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/sunset1/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/museum1/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/cherryblossom/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/waterfall1/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+        <div class="explore-grid__card">
+          <img src="https://picsum.photos/seed/canyon1/320/240" alt="Saint Clair Beach" loading="lazy">
+          <div class="explore-grid__overlay"></div>
+          <div class="explore-grid__info">
+            <span class="explore-grid__name">Saint Clair Beach</span>
+            <div class="explore-grid__rating">
+              <span>4.7</span>
+              <span class="material-symbols-rounded explore-grid__star">star</span>
+              <span>(325)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Itinerary ── -->
+    <div class="left-panel__content" data-content="itinerary">
+      <div class="itinerary-panel">
+        <header class="itinerary-panel__header">
+          <h1 class="itinerary-panel__title">Seattle Road Trip Adventure</h1>
+          <p class="itinerary-panel__subtitle">Discover Seattle's lively streets and famous sights for an unforgettable two-day road trip. From Pike Place Market's energy to stunning waterfront views, the city promises endless fun.</p>
+        </header>
+        <div class="itinerary-panel__timeline">
+          <div class="itinerary-panel__entry">
+            <div class="itinerary-panel__divider"></div>
+            <h3 class="itinerary-panel__time">Day 1: 8 AM ☀️</h3>
+            <p class="itinerary-panel__text">Begin your day with a tranquil walk in Discovery Park, catching the sunrise over Puget Sound. Enjoy a fresh coffee and pastry at Storyville Café. Beat the crowds by visiting the Space Needle early for breathtaking city views. Wrap up the morning with a stroll along the waterfront, watching ferries sail by.</p>
+          </div>
+          <div class="itinerary-panel__entry">
+            <div class="itinerary-panel__divider"></div>
+            <h3 class="itinerary-panel__time">Day 1: 4 PM 🍾</h3>
+            <p class="itinerary-panel__text">Spend your afternoon exploring Pike Place Market, tasting local treats and browsing crafts. Later, catch live music at The Crocodile, a cozy venue. Dine at a waterfront restaurant overlooking Elliott Bay, then end your evening with a peaceful walk by the glowing Seattle Great Wheel.</p>
+          </div>
+          <div class="itinerary-panel__entry">
+            <div class="itinerary-panel__divider"></div>
+            <h3 class="itinerary-panel__time">Day 2: 8 AM ☀️</h3>
+            <p class="itinerary-panel__text">Start your second day with a visit to the Museum of Pop Culture to dive into Seattle's vibrant arts scene. Grab brunch at a nearby café like Tilikum Place. Then, take a scenic drive to Gas Works Park for panoramic city views and a relaxing afternoon.</p>
+          </div>
+          <div class="itinerary-panel__entry">
+            <div class="itinerary-panel__divider"></div>
+            <h3 class="itinerary-panel__time">Day 2: 3 PM 🍾</h3>
+            <p class="itinerary-panel__text">In the afternoon, explore the historic Fremont neighborhood with its quirky shops and the famous Fremont Troll. Finish your trip with dinner at a rooftop restaurant offering stunning sunset views over Lake Union.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky footer: shared prompt input -->
+    <div class="panel-footer">
+      <div class="panel-footer__input-wrap">
+        <input
+          type="text"
+          class="panel-footer__input"
+          placeholder="Where to?"
+          aria-label="Trip destination"
+        >
+        <button class="panel-footer__send" aria-label="Start trip">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+      <div class="panel-footer__loading" hidden>
+        <span class="panel-footer__loading-dot"></span>
+        <span class="panel-footer__loading-dot"></span>
+        <span class="panel-footer__loading-dot"></span>
+      </div>
+      <p class="panel-footer__disclaimer">Gemini can make mistakes</p>
+    </div>
+  </aside>
+
+  <!-- ═══════════════ MAIN AREA ═══════════════ -->
+  <main class="main-area">
+    <div class="map-container" id="map"></div>
+
+    <!-- Floating action clusters -->
+    <div class="fab-clusters">
+      <div class="fab-cluster" data-fab="select" data-action="draw-mode">
+        <span class="material-symbols-rounded">highlight_alt</span>
+        <span class="fab-cluster__divider"></span>
+        <span class="material-symbols-rounded">edit</span>
+      </div>
+      <div class="fab-cluster" data-fab="collab">
+        <span class="material-symbols-rounded">group_add</span>
+        <span class="fab-cluster__divider"></span>
+        <span class="material-symbols-rounded">share</span>
+      </div>
+      <div class="fab-cluster" data-fab="zoom">
+        <span class="material-symbols-rounded">add</span>
+        <span class="fab-cluster__divider"></span>
+        <span class="material-symbols-rounded">remove</span>
+      </div>
+      <div class="fab-cluster fab-cluster--single" data-fab="emergency">
+        <span class="material-symbols-rounded">emergency</span>
+      </div>
+    </div>
+
+    <div class="map-draw-input" hidden>
+      <div class="map-draw-input__card">
+        <input type="text" class="map-draw-input__field" placeholder="Where to?" aria-label="Plan a stop">
+        <button class="map-draw-input__send" aria-label="Submit">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+</body>
+</html>

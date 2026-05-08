@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── Nav Rail (desktop) / Bottom Tab Bar (mobile) ── -->
+  <nav class="nav-rail" aria-label="Main navigation">
+    <div class="nav-rail__logo">
+      <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" class="nav-rail__google-logo">
+    </div>
+
+    <div class="nav-rail__items">
+      <button class="nav-rail__item nav-rail__item--active" aria-current="page" data-nav="explore">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">explore</span>
+        </span>
+        <span class="nav-rail__label">Explore</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="directions">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">directions</span>
+        </span>
+        <span class="nav-rail__label">Go</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="saved">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">bookmark</span>
+        </span>
+        <span class="nav-rail__label">Saved</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="contribute">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">add_circle</span>
+        </span>
+        <span class="nav-rail__label">Contribute</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="updates">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
+        </span>
+        <span class="nav-rail__label">Updates</span>
+      </button>
+    </div>
+
+    <div class="nav-rail__footer">
+      <button class="nav-rail__item" data-nav="settings" aria-label="Settings">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">settings</span>
+        </span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main content area ── -->
+  <main class="main-area">
+
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-bar" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="search-suggestions">
+        <button class="search-bar__icon-btn" aria-label="Main menu">
+          <span class="material-symbols-rounded">menu</span>
+        </button>
+
+        <input
+          type="text"
+          class="search-bar__input"
+          placeholder="Search Google Maps"
+          aria-label="Search Google Maps"
+          aria-autocomplete="list"
+          aria-controls="search-suggestions"
+          autocomplete="off"
+        >
+
+        <button class="search-bar__icon-btn search-bar__clear" aria-label="Clear search" hidden>
+          <span class="material-symbols-rounded">close</span>
+        </button>
+
+        <div class="search-bar__divider"></div>
+
+        <button class="search-bar__icon-btn" aria-label="Search by voice">
+          <span class="material-symbols-rounded">mic</span>
+        </button>
+
+        <button class="search-bar__icon-btn" aria-label="Search nearby">
+          <span class="material-symbols-rounded">search</span>
+        </button>
+      </div>
+
+      <!-- Suggestions dropdown -->
+      <ul id="search-suggestions" class="search-suggestions" role="listbox" hidden>
+        <!-- Populated by JS -->
+      </ul>
+
+      <!-- Category chips -->
+      <div class="category-chips" aria-label="Quick categories">
+        <button class="chip">
+          <span class="material-symbols-rounded" aria-hidden="true">restaurant</span>
+          Restaurants
+        </button>
+        <button class="chip">
+          <span class="material-symbols-rounded" aria-hidden="true">local_gas_station</span>
+          Gas
+        </button>
+        <button class="chip">
+          <span class="material-symbols-rounded" aria-hidden="true">local_cafe</span>
+          Coffee
+        </button>
+        <button class="chip">
+          <span class="material-symbols-rounded" aria-hidden="true">hotel</span>
+          Hotels
+        </button>
+        <button class="chip">
+          <span class="material-symbols-rounded" aria-hidden="true">local_pharmacy</span>
+          Pharmacies
+        </button>
+        <button class="chip">
+          <span class="material-symbols-rounded" aria-hidden="true">local_grocery_store</span>
+          Groceries
+        </button>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <aside class="side-panel" aria-label="Search results" hidden>
+      <div class="side-panel__header">
+        <h2 class="side-panel__title">Results</h2>
+        <button class="side-panel__close" aria-label="Close panel">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <div class="side-panel__content">
+        <ul class="results-list" role="list">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Place Detail Card -->
+    <aside class="place-card" aria-label="Place details" hidden>
+      <div class="place-card__header">
+        <button class="place-card__close" aria-label="Close details">
+          <span class="material-symbols-rounded">arrow_back</span>
+        </button>
+        <h2 class="place-card__name"></h2>
+      </div>
+
+      <div class="place-card__info">
+        <div class="place-card__rating">
+          <span class="place-card__stars"></span>
+          <span class="place-card__review-count"></span>
+        </div>
+        <p class="place-card__category"></p>
+        <p class="place-card__address"></p>
+      </div>
+
+      <div class="place-card__actions">
+        <button class="place-card__action-btn">
+          <span class="material-symbols-rounded" aria-hidden="true">directions</span>
+          <span>Directions</span>
+        </button>
+        <button class="place-card__action-btn">
+          <span class="material-symbols-rounded" aria-hidden="true">bookmark</span>
+          <span>Save</span>
+        </button>
+        <button class="place-card__action-btn">
+          <span class="material-symbols-rounded" aria-hidden="true">share</span>
+          <span>Share</span>
+        </button>
+        <button class="place-card__action-btn">
+          <span class="material-symbols-rounded" aria-hidden="true">call</span>
+          <span>Call</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Map -->
+    <div id="map" class="map-canvas"></div>
+
+    <!-- Map Controls -->
+    <div class="map-controls">
+      <button class="map-control-btn" id="zoom-in" aria-label="Zoom in">
+        <span class="material-symbols-rounded">add</span>
+      </button>
+      <button class="map-control-btn" id="zoom-out" aria-label="Zoom out">
+        <span class="material-symbols-rounded">remove</span>
+      </button>
+    </div>
+
+    <button class="fab-locate" id="btn-locate" aria-label="Your location">
+      <span class="material-symbols-rounded">my_location</span>
+    </button>
+
+    <!-- Street View / Layers toggle -->
+    <div class="layers-control">
+      <button class="layers-btn" aria-label="Layers">
+        <span class="material-symbols-rounded">layers</span>
+        <span class="layers-btn__label">Layers</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

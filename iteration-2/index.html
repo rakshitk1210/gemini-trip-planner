@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Road Trip Planner</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── Nav Rail ── -->
+  <nav class="nav-rail" aria-label="Main navigation">
+    <div class="nav-rail__top">
+      <button class="nav-rail__menu" aria-label="Main menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+
+      <button class="nav-rail__item nav-rail__item--active" aria-current="page" data-nav="roadtrip">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>
+        </span>
+        <span class="nav-rail__label">Road trip</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="saved">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">bookmark</span>
+        </span>
+        <span class="nav-rail__label">Saved</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="recent">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">history</span>
+        </span>
+        <span class="nav-rail__label">Recent</span>
+      </button>
+    </div>
+
+    <div class="nav-rail__divider"></div>
+
+    <div class="nav-rail__bottom">
+      <button class="nav-rail__item" data-nav="getapp">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">install_mobile</span>
+        </span>
+        <span class="nav-rail__label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main area ── -->
+  <main class="main-area">
+
+    <!-- Itinerary Panel (hidden until results) -->
+    <aside class="itinerary-panel" id="itinerary-panel" hidden>
+      <div class="itinerary-panel__header">
+        <h2 class="itinerary-panel__title" id="itinerary-title"></h2>
+        <p class="itinerary-panel__desc" id="itinerary-desc"></p>
+      </div>
+      <div class="itinerary-panel__body">
+        <ol class="itinerary-list" id="itinerary-list">
+          <!-- Populated by JS -->
+        </ol>
+        <div class="trip-stats" id="trip-stats">
+          <div class="trip-stat">
+            <div class="trip-stat__label">
+              <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>
+              <span>Distance</span>
+            </div>
+            <span class="trip-stat__value" id="stat-distance"></span>
+          </div>
+          <div class="trip-stat">
+            <div class="trip-stat__label">
+              <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+              <span>Time</span>
+            </div>
+            <span class="trip-stat__value" id="stat-time"></span>
+          </div>
+          <div class="trip-stat">
+            <div class="trip-stat__label">
+              <span class="material-symbols-rounded" aria-hidden="true">local_gas_station</span>
+              <span>Car type</span>
+            </div>
+            <span class="trip-stat__value" id="stat-cartype"></span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Map -->
+    <div id="map" class="map-canvas"></div>
+
+    <!-- Map Controls -->
+    <div class="map-controls">
+      <button class="map-control-btn" id="btn-locate" aria-label="Your location">
+        <span class="material-symbols-rounded">my_location</span>
+      </button>
+      <div class="map-controls__zoom">
+        <button class="map-control-btn" id="zoom-in" aria-label="Zoom in">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <button class="map-control-btn" id="zoom-out" aria-label="Zoom out">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div class="layers-control">
+      <button class="layers-btn" aria-label="Layers">
+        <span class="material-symbols-rounded">layers</span>
+        <span class="layers-btn__label">Layers</span>
+      </button>
+    </div>
+
+    <!-- Prompt Bar -->
+    <div class="prompt-bar" id="prompt-bar">
+      <div class="prompt-bar__inner">
+        <div class="prompt-bar__input-wrap">
+          <div class="prompt-bar__content" id="prompt-content">
+            <div class="prompt-bar__input-area">
+              <textarea
+                class="prompt-bar__textarea"
+                id="prompt-input"
+                placeholder="Where do you want to go today?"
+                rows="1"
+                aria-label="Plan your trip"
+              ></textarea>
+            </div>
+            <div class="prompt-bar__loading" id="prompt-loading" hidden>
+              <span class="prompt-bar__loading-text">Generating a road trip plan for you ....</span>
+            </div>
+          </div>
+        </div>
+        <div class="prompt-bar__actions">
+          <div class="prompt-bar__left-actions">
+            <button class="prompt-bar__action-btn" aria-label="Add stop">
+              <span class="material-symbols-rounded">add</span>
+            </button>
+            <button class="prompt-bar__action-btn" aria-label="Voice input">
+              <span class="material-symbols-rounded">mic</span>
+            </button>
+          </div>
+          <button class="prompt-bar__send" id="btn-send" aria-label="Send" disabled>
+            <span class="material-symbols-rounded">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="map-footer">
+      <span>Imagery &copy;2026</span>
+      <span>Map data &copy;2026 Google</span>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Send Product Feedback</a>
+    </footer>
+
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

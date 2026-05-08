@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Road Trip Planner</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-state="map-fullscreen">
+
+  <!-- ═══════════════ NAV RAIL ═══════════════ -->
+  <nav class="nav-rail">
+    <div class="nav-rail__top">
+      <button class="nav-rail__btn nav-rail__btn--icon-only" data-action="home" aria-label="Map">
+        <span class="material-symbols-rounded">map</span>
+      </button>
+      <button class="nav-rail__btn nav-rail__btn--labeled active" data-action="road-trip" aria-label="Road trip">
+        <span class="material-symbols-rounded">directions_car</span>
+        <span class="nav-rail__label">Road trip</span>
+      </button>
+      <button class="nav-rail__btn nav-rail__btn--labeled" data-action="saved" aria-label="Saved">
+        <span class="material-symbols-rounded">bookmark</span>
+        <span class="nav-rail__label">Saved</span>
+      </button>
+      <button class="nav-rail__btn nav-rail__btn--labeled" data-action="recent" aria-label="Recent">
+        <span class="material-symbols-rounded">history</span>
+        <span class="nav-rail__label">Recent</span>
+      </button>
+      <div class="nav-rail__divider"></div>
+    </div>
+    <div class="nav-rail__bottom">
+      <div class="nav-rail__divider"></div>
+      <button class="nav-rail__btn nav-rail__btn--labeled" data-action="get-app" aria-label="Get app">
+        <span class="material-symbols-rounded">phone_android</span>
+        <span class="nav-rail__label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ LEFT PANEL ═══════════════ -->
+  <aside class="left-panel">
+    <!-- Trip Stops Section -->
+    <section class="trip-stops">
+      <div class="trip-stops__header">
+        <h2 class="trip-stops__title">My Trip</h2>
+      </div>
+      <div class="trip-stops__list">
+        <div class="stop-row">
+          <div class="stop-row__indicator">
+            <span class="stop-row__dot stop-row__dot--blue"></span>
+            <span class="stop-row__line"></span>
+          </div>
+          <div class="stop-row__info">
+            <span class="stop-row__name">Seattle</span>
+          </div>
+          <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+        </div>
+        <div class="stop-row">
+          <div class="stop-row__indicator">
+            <span class="stop-row__dot stop-row__dot--blue"></span>
+            <span class="stop-row__line"></span>
+          </div>
+          <div class="stop-row__info">
+            <span class="stop-row__name">Everett</span>
+          </div>
+          <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+        </div>
+        <div class="stop-row">
+          <div class="stop-row__indicator">
+            <span class="stop-row__dot stop-row__dot--blue"></span>
+            <span class="stop-row__line"></span>
+          </div>
+          <div class="stop-row__info">
+            <span class="stop-row__name">Bellingham</span>
+          </div>
+          <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+        </div>
+        <div class="stop-row stop-row--last">
+          <div class="stop-row__indicator">
+            <span class="material-symbols-rounded stop-row__pin">location_on</span>
+          </div>
+          <div class="stop-row__info">
+            <span class="stop-row__name">Portland</span>
+          </div>
+          <span class="material-symbols-rounded stop-row__drag">drag_indicator</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Explore Along Route Section -->
+    <section class="explore-section">
+      <h2 class="explore-section__title">Explore along the route</h2>
+      <div class="tabs tabs--panel">
+        <button class="tabs__item active" data-tab="attractions">Attractions</button>
+        <button class="tabs__item" data-tab="restaurants">Restaurants</button>
+        <button class="tabs__item" data-tab="gas">Gas</button>
+      </div>
+      <div class="poi-list">
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?pike-place-market,seattle" alt="Pike Place Market" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Pike Place Market</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.6</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Market · Historic</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?space-needle,seattle" alt="Space Needle" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Space Needle</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.5</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Observation</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?museum,pop-culture" alt="Museum of Pop Culture" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Museum of Pop Culture</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.4</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Museum</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?chihuly,glass-art" alt="Chihuly Garden and Glass" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Chihuly Garden and Glass</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.7</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Art · Museum</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?ferris-wheel,waterfront" alt="Seattle Great Wheel" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Seattle Great Wheel</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.5</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Amusement</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?kerry-park,seattle-skyline" alt="Kerry Park" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Kerry Park</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.8</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Park · Viewpoint</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?gas-works-park,seattle" alt="Gas Works Park" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Gas Works Park</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.5</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Park · Scenic</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?sculpture,outdoor-art" alt="Olympic Sculpture Park" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Olympic Sculpture Park</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.6</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Art · Park</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?fremont-troll,street-art" alt="Fremont Troll" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Fremont Troll</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.3</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Landmark</span>
+            </div>
+          </div>
+        </div>
+        <div class="poi-item">
+          <img class="poi-item__thumb" src="https://source.unsplash.com/56x56/?discovery-park,nature-trail" alt="Discovery Park" loading="lazy">
+          <div class="poi-item__content">
+            <span class="poi-item__name">Discovery Park</span>
+            <div class="poi-item__meta">
+              <span class="poi-item__rating">4.7</span>
+              <span class="material-symbols-rounded poi-item__star">star</span>
+              <span class="poi-item__dot">&middot;</span>
+              <span class="poi-item__type">Nature · Park</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ═══════════════ MAIN AREA ═══════════════ -->
+  <main class="main-area">
+    <!-- Map-area tabs -->
+    <div class="tabs tabs--main">
+      <button class="tabs__item active" data-main-tab="route">Route</button>
+      <button class="tabs__item" data-main-tab="itinerary">Itinerary</button>
+    </div>
+
+    <!-- Map container -->
+    <div class="map-container" id="map"></div>
+
+    <!-- Itinerary View -->
+    <div class="itinerary-view" hidden>
+      <div class="itinerary-view__content">
+        <header class="itinerary-view__header">
+          <h1 class="itinerary-view__title">Seattle Road Trip Adventure</h1>
+          <p class="itinerary-view__subtitle">Discover Seattle's lively streets and famous sights for an unforgettable two-day road trip. From Pike Place Market's energy to stunning waterfront views, the city promises endless fun.</p>
+        </header>
+        <div class="itinerary-view__timeline">
+          <div class="itinerary-entry">
+            <div class="itinerary-entry__divider"></div>
+            <h3 class="itinerary-entry__time">Day 1: 8 AM ☀️</h3>
+            <p class="itinerary-entry__text">Begin your day with a tranquil walk in Discovery Park, catching the sunrise over Puget Sound. Enjoy a fresh coffee and pastry at Storyville Café. Beat the crowds by visiting the Space Needle early for breathtaking city views. Wrap up the morning with a stroll along the waterfront, watching ferries sail by.</p>
+          </div>
+          <div class="itinerary-entry">
+            <div class="itinerary-entry__divider"></div>
+            <h3 class="itinerary-entry__time">Day 1: 4 PM 🍾</h3>
+            <p class="itinerary-entry__text">Spend your afternoon exploring Pike Place Market, tasting local treats and browsing crafts. Later, catch live music at The Crocodile, a cozy venue. Dine at a waterfront restaurant overlooking Elliott Bay, then end your evening with a peaceful walk by the glowing Seattle Great Wheel.</p>
+          </div>
+          <div class="itinerary-entry">
+            <div class="itinerary-entry__divider"></div>
+            <h3 class="itinerary-entry__time">Day 2: 8 AM ☀️</h3>
+            <p class="itinerary-entry__text">Start your second day with a visit to the Museum of Pop Culture to dive into Seattle's vibrant arts scene. Grab brunch at a nearby café like Tilikum Place. Then, take a scenic drive to Gas Works Park for panoramic city views and a relaxing afternoon.</p>
+          </div>
+          <div class="itinerary-entry">
+            <div class="itinerary-entry__divider"></div>
+            <h3 class="itinerary-entry__time">Day 2: 3 PM 🍾</h3>
+            <p class="itinerary-entry__text">In the afternoon, explore the historic Fremont neighborhood with its quirky shops and the famous Fremont Troll. Finish your trip with dinner at a rooftop restaurant offering stunning sunset views over Lake Union.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trip intro bar (State 1 only) -->
+    <div class="trip-intro-bar">
+      <div class="trip-intro-bar__inner">
+        <input
+          type="text"
+          class="trip-intro-bar__input"
+          placeholder="Where do you want to go today?"
+          aria-label="Trip destination"
+        >
+        <button class="trip-intro-bar__send" aria-label="Start trip">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating action clusters -->
+    <div class="fab-clusters">
+      <div class="fab-cluster">
+        <span class="material-symbols-rounded">highlight_alt</span>
+        <span class="fab-cluster__divider"></span>
+        <span class="material-symbols-rounded">edit</span>
+      </div>
+      <div class="fab-cluster">
+        <span class="material-symbols-rounded">group_add</span>
+        <span class="fab-cluster__divider"></span>
+        <span class="material-symbols-rounded">share</span>
+      </div>
+      <div class="fab-cluster">
+        <span class="material-symbols-rounded">add</span>
+        <span class="fab-cluster__divider"></span>
+        <span class="material-symbols-rounded">remove</span>
+      </div>
+      <!-- Gap 4: emergency single-icon cluster -->
+      <div class="fab-cluster fab-cluster--single">
+        <span class="material-symbols-rounded">emergency</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══════════════ RIGHT PANEL (State 4) ═══════════════ -->
+  <aside class="right-panel">
+    <div class="right-panel__header">
+      <span class="right-panel__title">Trip plan</span>
+      <button class="right-panel__close" aria-label="Close trip details">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <div class="right-panel__content">
+      <!-- Section 1: image gallery -->
+      <div class="trip-section">
+        <span class="trip-section__tag">Seattle → Everett</span>
+        <p class="trip-section__desc">Scenic coastal drive along Puget Sound, past Edmonds waterfront and Mukilteo lighthouse. About 30 minutes, with stunning Sound views.</p>
+        <div class="trip-section__plan">
+          <div class="trip-section__plan-header">
+            <span>Plan created</span>
+            <span class="material-symbols-rounded">chevron_right</span>
+          </div>
+          <div class="trip-section__images">
+            <div class="trip-section__img">
+              <img src="https://source.unsplash.com/98x80/?puget-sound,coast" alt="Puget Sound coast" loading="lazy">
+            </div>
+            <div class="trip-section__img">
+              <img src="https://source.unsplash.com/98x80/?edmonds,washington" alt="Edmonds waterfront" loading="lazy">
+            </div>
+            <div class="trip-section__img">
+              <img src="https://source.unsplash.com/98x80/?lighthouse,pacific-northwest" alt="Mukilteo lighthouse" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: task complete -->
+      <div class="trip-section">
+        <span class="trip-section__tag">Everett → Bellingham</span>
+        <p class="trip-section__desc">Drive north through Snohomish County farmlands and Skagit Valley tulip fields toward Bellingham Bay.</p>
+        <div class="trip-section__plan trip-section__plan--done">
+          <span>Plan created</span>
+          <span class="material-symbols-rounded">task_alt</span>
+        </div>
+      </div>
+
+      <!-- Section 3: task complete -->
+      <div class="trip-section">
+        <span class="trip-section__tag">Bellingham → Portland</span>
+        <p class="trip-section__desc">Cross into Oregon via the Columbia River Gorge. Stop at Multnomah Falls and enjoy dramatic volcanic scenery.</p>
+        <div class="trip-section__plan trip-section__plan--done">
+          <span>Plan created</span>
+          <span class="material-symbols-rounded">task_alt</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel__footer">
+      <div class="trip-intro-bar__inner">
+        <input
+          type="text"
+          class="trip-intro-bar__input"
+          placeholder="Ask about this stop..."
+          aria-label="Ask about this stop"
+        >
+        <button class="trip-intro-bar__send" aria-label="Send">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <script src="app.js"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+</body>
+</html>

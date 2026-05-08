@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Road Trip Planner</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Symbols Rounded -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── Nav Rail ── -->
+  <nav class="nav-rail" aria-label="Main navigation">
+    <div class="nav-rail__top">
+      <button class="nav-rail__menu" aria-label="Main menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+
+      <button class="nav-rail__item nav-rail__item--active" aria-current="page" data-nav="roadtrip">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>
+        </span>
+        <span class="nav-rail__label">Road trip</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="saved">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">bookmark</span>
+        </span>
+        <span class="nav-rail__label">Saved</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="recent">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">history</span>
+        </span>
+        <span class="nav-rail__label">Recent</span>
+      </button>
+    </div>
+
+    <div class="nav-rail__divider"></div>
+
+    <div class="nav-rail__bottom">
+      <button class="nav-rail__item" data-nav="getapp">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded" aria-hidden="true">install_mobile</span>
+        </span>
+        <span class="nav-rail__label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Side Panel ── -->
+  <aside class="side-panel">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab tab--active" data-tab="roadtrip">Road trip</button>
+      <button class="tab" data-tab="route">Route</button>
+    </div>
+
+    <!-- Road Trip Tab Panel -->
+    <div class="tab-panel tab-panel--roadtrip" id="panel-roadtrip">
+      <div class="ai-content" id="ai-content">
+        <!-- Idle state -->
+        <div class="ai-idle" id="ai-idle">
+          <div class="ai-idle__icon">
+            <img src="https://maps.google.com/mapfiles/kml/paddle/red-circle.png" alt="" width="40" height="40">
+          </div>
+          <p class="ai-idle__text">Plan your next adventure. Tell me where you want to go and what kind of trip you'd like.</p>
+        </div>
+
+        <!-- Results state -->
+        <div class="ai-result" id="ai-result" hidden>
+          <div class="ai-result__badge" id="ai-trip-badge"></div>
+          <div class="ai-result__description" id="ai-description"></div>
+          <div class="ai-result__plan" id="ai-plan" hidden>
+            <div class="ai-result__plan-header">
+              <span class="ai-result__plan-label">Plan Created</span>
+              <span class="material-symbols-rounded ai-result__plan-chevron">chevron_right</span>
+            </div>
+            <div class="ai-result__plan-images">
+              <div class="ai-result__plan-img" style="background-image: url('https://picsum.photos/seed/trip1/196/160')"></div>
+              <div class="ai-result__plan-img" style="background-image: url('https://picsum.photos/seed/trip2/196/160')"></div>
+              <div class="ai-result__plan-img" style="background-image: url('https://picsum.photos/seed/trip3/196/160')"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Place search results (from draw & find) -->
+        <div class="place-results" id="place-results" hidden>
+          <div class="place-results__header" id="place-results-header"></div>
+          <ol class="place-results__list" id="place-results-list">
+            <!-- Populated by JS -->
+          </ol>
+        </div>
+      </div>
+
+      <!-- Input pinned to bottom -->
+      <div class="input-container">
+        <div class="input-field">
+          <div class="input-prompt">
+            <textarea
+              class="input-prompt__textarea"
+              id="prompt-input"
+              placeholder="Where do you want to go today?"
+              rows="1"
+              aria-label="Plan your trip"
+            ></textarea>
+          </div>
+          <div class="input-options">
+            <div class="input-options__left">
+              <button class="input-options__btn" aria-label="Add stop">
+                <span class="material-symbols-rounded">add</span>
+              </button>
+              <button class="input-options__btn" aria-label="Voice input">
+                <span class="material-symbols-rounded">mic</span>
+              </button>
+            </div>
+            <button class="input-options__send" id="btn-send" aria-label="Send" disabled>
+              <span class="material-symbols-rounded">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Route Tab Panel -->
+    <div class="tab-panel tab-panel--route" id="panel-route" hidden>
+      <div class="route-content">
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stats-cell">
+            <div class="stats-cell__label">
+              <span class="material-symbols-rounded">directions_car</span>
+              <span>Drive</span>
+            </div>
+            <span class="stats-cell__value" id="stat-distance">234.5 Km</span>
+          </div>
+          <div class="stats-cell">
+            <div class="stats-cell__label">
+              <span class="material-symbols-rounded">query_builder</span>
+              <span>Time</span>
+            </div>
+            <span class="stats-cell__value" id="stat-time">4hr 34min</span>
+          </div>
+          <div class="stats-cell">
+            <div class="stats-cell__label">
+              <span class="material-symbols-rounded">local_gas_station</span>
+              <span>Fuel</span>
+            </div>
+            <div class="stats-cell__value stats-cell__value--dropdown" id="stat-fuel">
+              <span>Gas</span>
+              <span class="material-symbols-rounded stats-cell__expand">expand_more</span>
+            </div>
+          </div>
+          <div class="stats-cell">
+            <div class="stats-cell__label">
+              <span class="material-symbols-rounded">health_and_safety</span>
+              <span>Road condition</span>
+            </div>
+            <span class="stats-cell__value" id="stat-road">Good</span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="route-divider"></div>
+
+        <!-- Location List (draggable) -->
+        <ol class="location-list" id="location-list">
+          <!-- Populated by JS -->
+        </ol>
+
+        <!-- Divider -->
+        <div class="route-divider"></div>
+
+        <!-- Explore Section -->
+        <div class="explore-section">
+          <h3 class="explore-section__title">Explore along the route</h3>
+          <div class="explore-grid" id="explore-grid">
+            <div class="explore-card explore-card--tall" style="background-image: url('https://picsum.photos/seed/explore1/296/500')"></div>
+            <div class="explore-card" style="background-image: url('https://picsum.photos/seed/explore2/340/240')"></div>
+            <div class="explore-card" style="background-image: url('https://picsum.photos/seed/explore3/340/240')"></div>
+            <div class="explore-card" style="background-image: url('https://picsum.photos/seed/explore4/296/242')"></div>
+            <div class="explore-card" style="background-image: url('https://picsum.photos/seed/explore5/340/242')"></div>
+            <div class="explore-card" style="background-image: url('https://picsum.photos/seed/explore6/296/242')"></div>
+            <div class="explore-card" style="background-image: url('https://picsum.photos/seed/explore7/340/242')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Area (Map) ── -->
+  <main class="main-area">
+    <div id="map" class="map-canvas"></div>
+
+    <!-- Map Controls -->
+    <div class="map-controls">
+      <button class="map-control-btn" id="btn-locate" aria-label="Your location">
+        <span class="material-symbols-rounded">my_location</span>
+      </button>
+      <div class="map-controls__zoom">
+        <button class="map-control-btn" id="zoom-in" aria-label="Zoom in">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <button class="map-control-btn" id="zoom-out" aria-label="Zoom out">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Draw FAB -->
+    <button class="draw-fab" id="btn-draw" aria-label="Draw to find places">
+      <span class="material-symbols-rounded">polyline</span>
+    </button>
+
+    <!-- Inline Search Dialog (appears after polygon drawn) -->
+    <div class="draw-search-dialog" id="draw-search-dialog" hidden>
+      <div class="draw-search-dialog__field">
+        <input
+          type="text"
+          class="draw-search-dialog__input"
+          id="draw-search-input"
+          placeholder="Find restaurants in this area"
+          aria-label="Search within drawn area"
+        >
+      </div>
+      <div class="draw-search-dialog__actions">
+        <button class="draw-search-dialog__add" aria-label="Add filter">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <button class="draw-search-dialog__send" id="draw-search-send" aria-label="Search">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div class="layers-control">
+      <button class="layers-btn" aria-label="Layers">
+        <span class="material-symbols-rounded">layers</span>
+        <span class="layers-btn__label">Layers</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="map-footer">
+      <span>Imagery &copy;2026</span>
+      <span>Map data &copy;2026 Google</span>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Send Product Feedback</a>
+    </footer>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

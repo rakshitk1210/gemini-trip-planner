@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Iteration 7</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-state="empty" data-tab="plan-ai" data-draw="off">
+
+  <!-- ═══════════════ NAV RAIL ═══════════════ -->
+  <nav class="rail" aria-label="Primary">
+    <div class="rail__group">
+      <button class="rail__btn rail__btn--icon" data-action="menu" aria-label="Menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+      <button class="rail__btn rail__btn--labeled is-active" data-action="road-trip" aria-label="Road trip">
+        <span class="rail__indicator">
+          <span class="material-symbols-rounded">directions_car</span>
+        </span>
+        <span class="rail__label">Road trip</span>
+      </button>
+      <button class="rail__btn rail__btn--labeled" data-action="saved" aria-label="Saved">
+        <span class="rail__indicator">
+          <span class="material-symbols-rounded">bookmark</span>
+        </span>
+        <span class="rail__label">Saved</span>
+      </button>
+      <button class="rail__btn rail__btn--labeled" data-action="recent" aria-label="Recent">
+        <span class="rail__indicator">
+          <span class="material-symbols-rounded">history</span>
+        </span>
+        <span class="rail__label">Recent</span>
+      </button>
+      <div class="rail__divider"></div>
+    </div>
+    <div class="rail__group">
+      <div class="rail__divider"></div>
+      <button class="rail__btn rail__btn--labeled" data-action="get-app" aria-label="Get app">
+        <span class="rail__indicator">
+          <span class="material-symbols-rounded">phone_android</span>
+        </span>
+        <span class="rail__label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ SIDE PANEL ═══════════════ -->
+  <aside class="panel">
+
+    <!-- Tab bar -->
+    <div class="tabs" role="tablist">
+      <button class="tabs__tab is-active" role="tab" data-tab="plan-ai">
+        <span class="tabs__label">Plan AI</span>
+        <span class="tabs__indicator"></span>
+      </button>
+      <button class="tabs__tab" role="tab" data-tab="route">
+        <span class="tabs__label">Route</span>
+        <span class="tabs__indicator"></span>
+      </button>
+      <button class="tabs__tab" role="tab" data-tab="itinerary">
+        <span class="tabs__label">Itinerary</span>
+        <span class="tabs__indicator"></span>
+      </button>
+    </div>
+
+    <!-- Scrollable panel body -->
+    <div class="panel__body">
+
+      <!-- ───── Plan AI ───── -->
+      <section class="pane is-active" data-pane="plan-ai">
+
+        <!-- Empty state (centred pin + greeting) -->
+        <div class="empty-state" data-empty>
+          <div class="empty-state__icon">
+            <span class="maps-pin" aria-hidden="true">
+              <svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 1.5c-7.732 0-14 6.268-14 14 0 9.5 14 23 14 23s14-13.5 14-23c0-7.732-6.268-14-14-14z" fill="#ea4335"/>
+                <path d="M20 1.5c-3.866 0-7.366 1.567-9.9 4.1l9.9 9.9V1.5z" fill="#fbbc04"/>
+                <path d="M10.1 5.6C7.567 8.134 6 11.634 6 15.5c0 3.866 1.567 7.366 4.1 9.9L20 15.5l-9.9-9.9z" fill="#34a853"/>
+                <path d="M30 15.5c0-3.866-1.567-7.366-4.1-9.9L20 11.5v4l5.9 9.9c2.533-2.534 4.1-6.034 4.1-9.9z" fill="#4285f4"/>
+                <circle cx="20" cy="15.5" r="5.5" fill="#ffffff"/>
+                <circle cx="20" cy="15.5" r="3.5" fill="#1a73e8"/>
+              </svg>
+            </span>
+          </div>
+          <h1 class="empty-state__title">Hi Rakshit, where next?</h1>
+        </div>
+
+        <!-- Conversation thread (rendered when user prompts AI or completes a draw) -->
+        <div class="thread" data-thread></div>
+      </section>
+
+      <!-- ───── Route ───── -->
+      <section class="pane" data-pane="route">
+
+        <ul class="stops">
+          <li class="stop" data-stop>
+            <span class="stop__marker"><span class="stop__dot"></span></span>
+            <span class="stop__chip">U-district</span>
+            <span class="stop__handle"><span class="material-symbols-rounded">drag_indicator</span></span>
+          </li>
+          <li class="stop" data-stop>
+            <span class="stop__marker"><span class="stop__dot"></span></span>
+            <span class="stop__chip">Redmond</span>
+            <span class="stop__handle"><span class="material-symbols-rounded">drag_indicator</span></span>
+          </li>
+          <li class="stop" data-stop>
+            <span class="stop__marker"><span class="stop__dot"></span></span>
+            <span class="stop__chip">Capitol Hill</span>
+            <span class="stop__handle"><span class="material-symbols-rounded">drag_indicator</span></span>
+          </li>
+          <li class="stop stop--final" data-stop>
+            <span class="stop__marker"><span class="material-symbols-rounded stop__pin">location_on</span></span>
+            <span class="stop__chip">Bellevue</span>
+            <span class="stop__handle"><span class="material-symbols-rounded">drag_indicator</span></span>
+          </li>
+        </ul>
+
+        <div class="thick-divider"></div>
+
+        <section class="route-summary">
+          <div class="route-summary__row">
+            <span class="material-symbols-rounded route-summary__icon">directions_car</span>
+            <div class="route-summary__details">
+              <div class="route-summary__head">
+                <span class="route-summary__via">via I-5 N</span>
+                <span class="route-summary__time">53 min</span>
+              </div>
+              <div class="route-summary__sub">
+                <span>Fastest route, the usual traffic</span>
+                <span>23.3 miles</span>
+              </div>
+            </div>
+          </div>
+          <div class="route-summary__actions">
+            <button class="link-btn">Details</button>
+            <button class="link-btn">Preview</button>
+          </div>
+        </section>
+
+        <div class="thick-divider"></div>
+
+        <h2 class="section-title">Along the route</h2>
+
+        <div class="poi-grid" data-poi-grid></div>
+      </section>
+
+      <!-- ───── Itinerary ───── -->
+      <section class="pane" data-pane="itinerary">
+        <header class="itinerary__header">
+          <h1 class="itinerary__title">Seattle Road Trip Adventure</h1>
+          <p class="itinerary__lede">Discover Seattle's lively streets and famous sights for an unforgettable two-day road trip. From Pike Place Market's energy to stunning waterfront views, the city promises endless fun.</p>
+        </header>
+
+        <div class="itinerary__timeline">
+          <div class="day">
+            <div class="day__divider"></div>
+            <h3 class="day__title">Day 1: 8 AM ☀️</h3>
+            <p class="day__text">Begin your day with a tranquil walk in Discovery Park, catching the sunrise over Puget Sound. Enjoy a fresh coffee and pastry at Storyville Café. Beat the crowds by visiting the Space Needle early for breathtaking city views. Wrap up the morning with a stroll along the waterfront, watching ferries sail by.</p>
+          </div>
+          <div class="day">
+            <div class="day__divider"></div>
+            <h3 class="day__title">Day 1: 4 PM 🍾</h3>
+            <p class="day__text">Spend your afternoon exploring Pike Place Market, tasting local treats and browsing crafts. Later, catch live music at The Crocodile, a cozy venue. Dine at a waterfront restaurant overlooking Elliott Bay, then end your evening with a peaceful walk by the glowing Seattle Great Wheel.</p>
+          </div>
+          <div class="day">
+            <div class="day__divider"></div>
+            <h3 class="day__title">Day 2: 8 AM ☀️</h3>
+            <p class="day__text">Start your second day with a visit to the Museum of Pop Culture to dive into Seattle's vibrant arts scene. Grab brunch at a nearby café like Tilikum Place. Then, take a scenic drive to Gas Works Park for panoramic city views and a relaxing afternoon.</p>
+          </div>
+          <div class="day">
+            <div class="day__divider"></div>
+            <h3 class="day__title">Day 2: 3 PM 🍾</h3>
+            <p class="day__text">In the afternoon, explore the historic Fremont neighborhood with its quirky shops and the famous Fremont Troll. Finish your trip with dinner at a rooftop restaurant offering stunning sunset views over Lake Union.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ───── Sticky footer (prompt input) ───── -->
+    <div class="footer">
+      <div class="prompt-box">
+        <input type="text" class="prompt-box__input" placeholder="Where to?" aria-label="Trip destination">
+        <button class="prompt-box__send" aria-label="Send">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+      <p class="footer__caption">Gemini can make mistakes</p>
+    </div>
+  </aside>
+
+  <!-- ═══════════════ MAP ═══════════════ -->
+  <main class="stage">
+    <div class="map" id="map"></div>
+
+    <!-- Floating right-side tool clusters -->
+    <div class="tools" data-tools>
+      <div class="tools__cluster">
+        <button class="tools__icon" data-action="draw" aria-label="Draw on map">
+          <span class="material-symbols-rounded">highlight_alt</span>
+        </button>
+        <span class="tools__divider"></span>
+        <button class="tools__icon" aria-label="Edit">
+          <span class="material-symbols-rounded">edit</span>
+        </button>
+      </div>
+      <div class="tools__cluster">
+        <button class="tools__icon" aria-label="Invite collaborators">
+          <span class="material-symbols-rounded">group_add</span>
+        </button>
+        <span class="tools__divider"></span>
+        <button class="tools__icon" aria-label="Share">
+          <span class="material-symbols-rounded">share</span>
+        </button>
+      </div>
+      <div class="tools__cluster">
+        <button class="tools__icon" data-action="zoom-in" aria-label="Zoom in">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <span class="tools__divider"></span>
+        <button class="tools__icon" data-action="zoom-out" aria-label="Zoom out">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating prompt input that anchors to a drawn shape -->
+    <div class="map-prompt" data-map-prompt hidden>
+      <div class="prompt-box">
+        <input type="text" class="prompt-box__input" placeholder="Where to?" aria-label="Plan a stop here">
+        <button class="prompt-box__send" aria-label="Send">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+/* ── Local font faces ── */
+@font-face {
+  font-family: "Google Sans";
+  src: url("../Google_Sans,Google_Sans_Code,Google_Sans_Flex/Google_Sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Google Sans";
+  src: url("../Google_Sans,Google_Sans_Code,Google_Sans_Flex/Google_Sans/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Google Sans Flex";
+  src: url("../Google_Sans,Google_Sans_Code,Google_Sans_Flex/Google_Sans_Flex/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ── Palette primitives ── */
+  --palette-blue-50:  #e8f0fe;
+  --palette-blue-500: #1a73e8;
+  --palette-blue-600: #1967d2;
+  --palette-blue-700: #185abc;
+  --palette-green-500: #34a853;
+  --palette-green-700: #188038;
+  --palette-yellow-500: #fbbc04;
+  --palette-red-500:   #ea4335;
+  --palette-red-700:   #c5221f;
+  --palette-neutral-0:    #ffffff;
+  --palette-neutral-50:   #f8f9fa;
+  --palette-neutral-100:  #f1f3f4;
+  --palette-neutral-200:  #e8eaed;
+  --palette-neutral-300:  #dadce0;
+  --palette-neutral-500:  #9aa0a6;
+  --palette-neutral-600:  #80868b;
+  --palette-neutral-700:  #5f6368;
+  --palette-neutral-800:  #3c4043;
+  --palette-neutral-900:  #202124;
+
+  /* ── Surface ── */
+  --color-surface-canvas:  var(--palette-neutral-50);
+  --color-surface-raised:  var(--palette-neutral-0);
+  --color-surface-overlay: var(--palette-neutral-0);
+  --color-surface-sunken:  var(--palette-neutral-100);
+
+  /* ── Text ── */
+  --color-text-primary:    var(--palette-neutral-900);
+  --color-text-secondary:  var(--palette-neutral-700);
+  --color-text-tertiary:   var(--palette-neutral-500);
+  --color-text-on-accent:  var(--palette-neutral-0);
+
+  /* ── Action ── */
+  --color-action-primary:           var(--palette-blue-500);
+  --color-action-primary-hover:     var(--palette-blue-600);
+  --color-action-primary-pressed:   var(--palette-blue-700);
+  --color-action-state-layer-hover: rgba(26, 115, 232, 0.08);
+
+  /* ── Border ── */
+  --color-border-subtle:  var(--palette-neutral-200);
+  --color-border-default: var(--palette-neutral-300);
+  --color-border-strong:  var(--palette-neutral-500);
+  --color-border-focus:   var(--palette-blue-500);
+
+  /* ── Brand / map ── */
+  --color-brand-primary: var(--palette-blue-600);
+  --color-feedback-success: var(--palette-green-700);
+  --color-map-pin: var(--palette-red-500);
+  --color-map-pin-selected: var(--palette-blue-500);
+
+  /* ── State layers (M3) ── */
+  --state-on-surface-10: rgba(29, 27, 32, 0.10);
+  --state-on-surface-12: rgba(29, 27, 32, 0.12);
+
+  /* ── Typography ── */
+  --font-family-primary: "Google Sans", Arial, sans-serif;
+  --font-family-display: "Google Sans Flex", "Google Sans", Arial, sans-serif;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+
+  --font-lh-xs: 16px;
+  --font-lh-sm: 16px;
+  --font-lh-md: 20px;
+  --font-lh-lg: 24px;
+  --font-lh-xl: 26px;
+  --font-lh-2xl: 28px;
+
+  /* ── Spacing ── */
+  --space-2xs: 2px;
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+
+  /* ── Radius ── */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   18px;
+  --radius-2xl:  24px;
+  --radius-pill: 40px;
+  --radius-full: 9999px;
+
+  /* ── Elevation ── */
+  --shadow-1: 0 1px 2px rgba(60, 64, 67, 0.30), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --shadow-2: 0 1px 3px rgba(60, 64, 67, 0.30), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  --shadow-3: 0 4px 8px rgba(60, 64, 67, 0.30), 0 8px 16px 6px rgba(60, 64, 67, 0.15);
+
+  /* ── Layout ── */
+  --nav-rail-width: 64px;
+  --panel-width:    360px;
+  --panel-gap:      8px;
+}

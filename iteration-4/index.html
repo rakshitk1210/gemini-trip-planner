@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Road Trip Planner</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── Nav Rail ── -->
+  <nav class="nav-rail">
+    <div class="nav-rail__top">
+      <button class="nav-rail__menu" aria-label="Main menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+
+      <button class="nav-rail__item nav-rail__item--active" data-nav="roadtrip">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">directions_car</span>
+        </span>
+        <span class="nav-rail__label">Road trip</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="saved">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">bookmark</span>
+        </span>
+        <span class="nav-rail__label">Saved</span>
+      </button>
+
+      <button class="nav-rail__item" data-nav="recent">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">history</span>
+        </span>
+        <span class="nav-rail__label">Recent</span>
+      </button>
+    </div>
+
+    <div class="nav-rail__bottom">
+      <button class="nav-rail__item" data-nav="getapp">
+        <span class="nav-rail__indicator">
+          <span class="material-symbols-rounded">install_mobile</span>
+        </span>
+        <span class="nav-rail__label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Map Container ── -->
+  <div class="map-container">
+    <div id="map"></div>
+
+    <!-- Welcome Card (Screen 1) -->
+    <div class="welcome-card" id="welcome-card">
+      <div class="welcome-card__pin">
+        <img src="https://maps.google.com/mapfiles/kml/paddle/red-circle.png" alt="" width="56" height="56">
+      </div>
+      <h2 class="welcome-card__text">Plan your next road trip.<br>Where do you want to go?</h2>
+      <div class="welcome-card__input">
+        <input type="text" id="welcome-input" placeholder="Where do you want to go today?" autocomplete="off">
+        <div class="welcome-card__actions">
+          <button class="welcome-card__btn" aria-label="Add">
+            <span class="material-symbols-rounded">add</span>
+          </button>
+          <button class="welcome-card__btn welcome-card__btn--send" id="welcome-send" aria-label="Send" disabled>
+            <span class="material-symbols-rounded">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Planning Layout (Screen 2) -->
+    <div class="planning-layout" id="planning-layout">
+      <!-- Left Panel -->
+      <div class="left-panel" id="left-panel">
+        <!-- Location List -->
+        <div class="location-list" id="location-list"></div>
+
+        <!-- Driving Metrics -->
+        <div class="metrics-section" id="metrics-section">
+          <div class="metric-group">
+            <div class="metric-label">
+              <span class="material-symbols-rounded">directions_car</span>
+              <span>Drive</span>
+            </div>
+            <div class="metric-value" id="metric-distance">122mi</div>
+            <input type="range" class="metric-slider" id="slider-distance" min="30" max="200" value="122">
+          </div>
+
+          <div class="metric-group">
+            <div class="metric-label">
+              <span class="material-symbols-rounded">query_builder</span>
+              <span>Hours</span>
+            </div>
+            <div class="metric-value" id="metric-hours">12hrs</div>
+            <input type="range" class="metric-slider" id="slider-hours" min="4" max="24" value="12">
+          </div>
+
+          <div class="info-chips">
+            <div class="info-chip">
+              <div class="info-chip__label">
+                <span class="material-symbols-rounded">local_gas_station</span>
+                <span>Fuel</span>
+              </div>
+              <div class="info-chip__value">
+                Gas
+                <span class="material-symbols-rounded">expand_more</span>
+              </div>
+            </div>
+            <div class="info-chip">
+              <div class="info-chip__label">
+                <span class="material-symbols-rounded">health_and_safety</span>
+                <span>Road condition</span>
+              </div>
+              <div class="info-chip__value">Good</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs + POI -->
+        <div class="poi-tabs" id="poi-tabs">
+          <button class="poi-tab poi-tab--active" data-tab="restaurants">Restaurants</button>
+          <button class="poi-tab" data-tab="hotels">Hotels</button>
+        </div>
+        <div class="poi-list" id="poi-list"></div>
+      </div>
+
+      <!-- Right Panel (AI Chat Module) -->
+      <div class="right-panel" id="right-panel">
+        <!-- Collapsed state -->
+        <div class="ai-module ai-module--collapsed" id="ai-module-collapsed" hidden>
+          <div class="ai-module__header">
+            <span class="ai-module__title">Seattle road trip</span>
+            <button class="ai-module__toggle" id="btn-expand" aria-label="Expand">
+              <span class="material-symbols-rounded">expand_less</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Expanded state -->
+        <div class="ai-module ai-module--expanded" id="ai-module-expanded">
+          <div class="ai-module__header ai-module__header--border">
+            <span class="ai-module__title">Seattle road trip</span>
+            <button class="ai-module__toggle" id="btn-collapse" aria-label="Collapse">
+              <span class="material-symbols-rounded">expand_more</span>
+            </button>
+          </div>
+
+          <div class="ai-module__thread" id="ai-thread">
+            <!-- Messages will be populated by JS -->
+          </div>
+
+          <div class="ai-module__input">
+            <input type="text" id="chat-input" placeholder="Where do you want to go today?" autocomplete="off">
+            <div class="ai-module__input-actions">
+              <button class="ai-module__input-btn" aria-label="Add">
+                <span class="material-symbols-rounded">add</span>
+              </button>
+              <button class="ai-module__input-btn ai-module__input-btn--send" id="chat-send" aria-label="Send">
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Controls -->
+    <div class="map-controls" id="map-controls">
+      <button class="map-control-btn" aria-label="Zoom in" id="zoom-in">
+        <span class="material-symbols-rounded">add</span>
+      </button>
+      <button class="map-control-btn" aria-label="Zoom out" id="zoom-out">
+        <span class="material-symbols-rounded">remove</span>
+      </button>
+    </div>
+
+    <!-- Map Footer -->
+    <footer class="map-footer">
+      <span>Imagery &copy;2026</span>
+      <span>Map data &copy;2026 Google</span>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+    </footer>
+  </div>
+
+  <!-- App JS must load before Google Maps callback fires -->
+  <script src="app.js"></script>
+  <!-- Google Maps JS API — calls initMap() once loaded -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+</body>
+</html>

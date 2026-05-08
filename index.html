@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Maps — Road Trip AI Redesign</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Google Sans Text', 'Roboto', sans-serif;
+      background: #f8f9fa;
+      color: #3c4043;
+      min-height: 100vh;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: #fff;
+      border-bottom: 1px solid #dadce0;
+      padding: 64px 24px 56px;
+      text-align: center;
+    }
+
+    .hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a73e8;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero__eyebrow .material-symbols-rounded {
+      font-size: 20px;
+    }
+
+    .hero__title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 44px;
+      font-weight: 700;
+      color: #202124;
+      line-height: 1.2;
+      max-width: 720px;
+      margin: 0 auto 16px;
+    }
+
+    .hero__subtitle {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #5f6368;
+      max-width: 640px;
+      margin: 0 auto 40px;
+    }
+
+    /* ── Problem / Goal / Key Things ── */
+    .brief {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 960px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .brief__card {
+      background: #f1f3f4;
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .brief__card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+    }
+
+    .brief__card-icon .material-symbols-rounded {
+      font-size: 22px;
+      color: #fff;
+    }
+
+    .brief__card-icon--problem { background: #ea4335; }
+    .brief__card-icon--goal { background: #1a73e8; }
+    .brief__card-icon--key { background: #34a853; }
+
+    .brief__card-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 8px;
+    }
+
+    .brief__card-text {
+      font-size: 14px;
+      color: #5f6368;
+      line-height: 1.6;
+    }
+
+    .brief__card-text ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .brief__card-text li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 4px;
+    }
+
+    .brief__card-text li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34a853;
+    }
+
+    /* ── Iterations grid ── */
+    .iterations {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    .iterations__heading {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 28px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 8px;
+    }
+
+    .iterations__sub {
+      font-size: 15px;
+      color: #5f6368;
+      margin-bottom: 32px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #dadce0;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+    }
+
+    .card:hover {
+      border-color: #1a73e8;
+      box-shadow: 0 4px 20px rgba(26, 115, 232, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .card__preview {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      background: #e8eaed;
+      overflow: hidden;
+    }
+
+    .card__preview iframe {
+      width: 200%;
+      height: 200%;
+      border: none;
+      transform: scale(0.5);
+      transform-origin: top left;
+      pointer-events: none;
+    }
+
+    .card__badge-float {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      color: #1a73e8;
+      font-family: 'Google Sans', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .card__info {
+      padding: 20px 24px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card__title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 6px;
+    }
+
+    .card__desc {
+      font-size: 14px;
+      color: #5f6368;
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .card__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 14px;
+      font-family: 'Google Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a73e8;
+    }
+
+    .card__link .material-symbols-rounded {
+      font-size: 18px;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover .card__link .material-symbols-rounded {
+      transform: translateX(3px);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .hero { padding: 48px 20px 40px; }
+      .hero__title { font-size: 30px; }
+      .hero__subtitle { font-size: 16px; }
+      .brief { grid-template-columns: 1fr; gap: 16px; padding: 0 20px; }
+      .iterations { padding: 40px 20px 60px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="hero__eyebrow">
+      <span class="material-symbols-rounded">map</span>
+      Design Exploration
+    </div>
+    <h1 class="hero__title">Reimagining Road Trip Planning on Google Maps</h1>
+    <p class="hero__subtitle">A progressive design exploration across 9 iterations — evolving Google Maps from a navigation tool into an AI-powered road trip planning companion.</p>
+
+    <div class="brief">
+      <div class="brief__card">
+        <div class="brief__card-icon brief__card-icon--problem">
+          <span class="material-symbols-rounded">report</span>
+        </div>
+        <div class="brief__card-title">Problem</div>
+        <div class="brief__card-text">Google Maps excels at point-to-point navigation but lacks a cohesive experience for planning multi-stop road trips — users juggle multiple tabs, note apps, and travel sites to piece together an itinerary.</div>
+      </div>
+      <div class="brief__card">
+        <div class="brief__card-icon brief__card-icon--goal">
+          <span class="material-symbols-rounded">flag</span>
+        </div>
+        <div class="brief__card-title">Goal</div>
+        <div class="brief__card-text">Design an integrated road trip planner inside Google Maps where users can describe a trip in natural language, get AI-generated routes and itineraries, and refine the plan through conversation — all without leaving the map.</div>
+      </div>
+      <div class="brief__card">
+        <div class="brief__card-icon brief__card-icon--key">
+          <span class="material-symbols-rounded">checklist</span>
+        </div>
+        <div class="brief__card-title">Key Outcomes</div>
+        <div class="brief__card-text">
+          <ul>
+            <li>Conversational AI trip planning</li>
+            <li>Multi-stop route visualization</li>
+            <li>Day-by-day itinerary generation</li>
+            <li>Along-the-route exploration</li>
+            <li>Single-panel unified workflow</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="iterations">
+    <h2 class="iterations__heading">All Iterations</h2>
+    <p class="iterations__sub">9 iterations — newest first</p>
+
+    <div class="grid">
+      <a class="card" href="./iteration-9/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-9/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">9</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Gemini Trip Planner — Conversational Landing</div>
+          <div class="card__desc">A full paradigm shift: start on a conversational landing screen, describe a trip to Gemini, and watch the map, route polyline, and threaded AI chat appear. Circle-draw on the map triggers area spot queries.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-8/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-8/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">8</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Mark an Area — Categorized POI Discovery</div>
+          <div class="card__desc">Draw a region on the map to surface restaurants, hotels, and spots inside it. Add picks to a persistent road trip list with live map markers and category filtering.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-7/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-7/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">7</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Plan AI — Conversation + Draw</div>
+          <div class="card__desc">Mock Gemini chat with route polylines, POI grid, draw-polygon prompts, and numbered suggestion pins.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-6/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-6/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">6</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">AI Chat Panel — Start Flow</div>
+          <div class="card__desc">Consolidated left panel with AI chat, route, and itinerary tabs. Empty state greeting transitions to conversational trip planning on first message.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-5/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-5/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">5</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Road Trip Planner — Figma-Matched UI</div>
+          <div class="card__desc">Pixel-perfect road trip planner with nav rail, split panel, route visualization, POI list, and AI-generated itinerary view.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-4/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-4/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">4</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Road Trip Planner — Mapbox Workspace</div>
+          <div class="card__desc">Full planning workspace with Mapbox GL map, reactive sliders, location list, and AI-powered trip summary.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-3/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-3/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">3</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Road Trip Planner — AI Exploration</div>
+          <div class="card__desc">AI-powered route suggestions with explore-along-the-route stops and smart descriptions.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-2/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-2/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">2</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Road Trip Planner — Itinerary Panel</div>
+          <div class="card__desc">Multi-stop itinerary builder with draggable waypoints and route visualization.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+
+      <a class="card" href="./iteration-1/index.html">
+        <div class="card__preview">
+          <iframe src="./iteration-1/index.html" tabindex="-1" loading="lazy" sandbox="allow-scripts allow-same-origin" aria-hidden="true"></iframe>
+          <div class="card__badge-float">1</div>
+        </div>
+        <div class="card__info">
+          <div class="card__title">Google Maps — Base UI</div>
+          <div class="card__desc">Core map interface with search, place cards, and side panel results.</div>
+          <span class="card__link">Open iteration <span class="material-symbols-rounded">arrow_forward</span></span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>
