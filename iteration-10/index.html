@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iteration 10 — Route Planning</title>
+  <link rel="stylesheet" href="../iteration-9/tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+</head>
+<body data-state="landing" data-tab="plan-ai" data-drawing="off">
+
+  <!-- ── Nav Rail ── -->
+  <nav class="rail">
+    <div class="rail-logo" onclick="goHome()">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="14" r="14" fill="#EA4335"/>
+        <path d="M14 7C10.134 7 7 10.134 7 14c0 2.556 1.351 4.796 3.374 6.046L14 25l3.626-4.954C19.649 18.796 21 16.556 21 14c0-3.866-3.134-7-7-7zm0 9.5A2.5 2.5 0 1 1 14 11.5a2.5 2.5 0 0 1 0 5z" fill="white"/>
+      </svg>
+    </div>
+    <div class="rail-items">
+      <button class="rail-item" title="Menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+      <button class="rail-item active" title="Road trip">
+        <span class="material-symbols-rounded">route</span>
+        <span class="rail-label">Road trip</span>
+      </button>
+      <button class="rail-item" id="savedBtn" title="Saved" onclick="openSavedTab()">
+        <span class="material-symbols-rounded">bookmark</span>
+        <span class="rail-label">Saved</span>
+      </button>
+      <button class="rail-item" title="Recent">
+        <span class="material-symbols-rounded">history</span>
+        <span class="rail-label">Recent</span>
+      </button>
+    </div>
+    <div class="rail-bottom">
+      <button class="rail-item" title="Get app">
+        <span class="material-symbols-rounded">install_mobile</span>
+        <span class="rail-label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Stage ── -->
+  <div class="stage">
+
+    <!-- Landing -->
+    <div class="landing">
+      <div class="landing-center">
+        <div class="spark-icon">
+          <img src="assets/gemini-spark.png" alt="Gemini" class="spark-img">
+        </div>
+        <h1 class="landing-heading">Hey Rakshit, where do you want to go today?</h1>
+        <div class="prompt-card">
+          <textarea class="prompt-textarea" rows="3" id="promptInput">Explore Seattle on a 2-day road trip, discovering iconic landmarks, vibrant neighborhoods, and scenic views along the way.</textarea>
+          <div class="prompt-actions">
+            <button class="prompt-attach" title="Attach">
+              <span class="material-symbols-rounded">add</span>
+            </button>
+            <div class="prompt-right">
+              <span class="gemini-label">
+                <img src="assets/gemini-spark.png" alt="" class="gemini-spark-sm">
+                Gemini 3.1 Pro
+              </span>
+              <button class="prompt-send" onclick="submitPrompt()" title="Send">
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <h2 class="trips-heading">Planned roadtrips</h2>
+        <div class="trips-grid">
+          <div class="trip-card" onclick="loadSavedTrip('seattle')">
+            <img class="trip-thumb" src="assets/seattle-trip.png" alt="Seattle day trip">
+            <div class="trip-meta">
+              <div class="trip-info">
+                <p class="trip-name">Seattle day trip</p>
+                <p class="trip-time">2hrs ago</p>
+              </div>
+              <div class="trip-avatars">
+                <img class="trip-avatar-img" src="assets/avatar-1.png" alt="">
+                <img class="trip-avatar-img" src="assets/avatar-2.png" alt="">
+              </div>
+            </div>
+          </div>
+          <div class="trip-card" onclick="loadSavedTrip('chicago')">
+            <img class="trip-thumb" src="assets/chicago-trip.png" alt="Chicago weekend trip">
+            <div class="trip-meta">
+              <div class="trip-info">
+                <p class="trip-name">Chicago weekend trip</p>
+                <p class="trip-time">2hrs ago</p>
+              </div>
+              <div class="trip-avatars">
+                <img class="trip-avatar-img" src="assets/avatar-2.png" alt="">
+                <img class="trip-avatar-img" src="assets/avatar-3.png" alt="">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="landing-disclaimer">Gemini can make mistakes</p>
+    </div>
+
+    <!-- Map (always present, hidden during landing) -->
+    <div id="map"></div>
+
+    <!-- Left panel -->
+    <div class="panel">
+      <div class="panel-tabs">
+        <button class="tab-btn active" data-tab="plan-ai">Plan AI</button>
+        <button class="tab-btn" data-tab="route">Route</button>
+        <button class="tab-btn" data-tab="saved">Saved</button>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Plan AI -->
+        <div class="tab-content" data-tab-content="plan-ai">
+          <div class="chat-messages" id="chatMessages"></div>
+        </div>
+
+        <!-- Route -->
+        <div class="tab-content" data-tab-content="route">
+          <div class="route-locations-list" id="routeStopsList"></div>
+          <div class="route-section-divider"></div>
+          <div class="route-info-card">
+            <div class="route-info-main">
+              <span class="material-symbols-rounded route-car-icon">directions_car</span>
+              <div class="route-details">
+                <div class="route-detail-row">
+                  <span class="route-via">via I-5 N</span>
+                  <span class="route-time-badge">2 hr 45 min</span>
+                </div>
+                <div class="route-detail-row">
+                  <span class="route-desc">Fastest route, the usual traffic</span>
+                  <span class="route-miles">142 miles</span>
+                </div>
+              </div>
+            </div>
+            <div class="route-edit-hint">
+              <span class="material-symbols-rounded" style="font-size:14px;color:#5f6368">info</span>
+              <span>Click a route line to select · Drag a stop to connect</span>
+            </div>
+          </div>
+          <div class="route-section-divider"></div>
+          <div class="along-route-header">
+            <h3 class="along-route-title">Along the route</h3>
+          </div>
+          <div class="along-route-grid" id="alongRouteGrid"></div>
+        </div>
+
+        <!-- Saved -->
+        <div class="tab-content" data-tab-content="saved">
+          <div class="saved-tab-header">
+            <p class="saved-tab-title">Saved places</p>
+            <p class="saved-tab-count" id="savedTabCount">No saved places yet</p>
+          </div>
+          <div class="bookmark-list" id="bookmarkList">
+            <p class="bookmark-empty">No saved spots yet. Use <strong>Save place</strong> on any spot.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="panel-footer">
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" placeholder="Tell me more…" id="chatInputField">
+          <button class="chat-send-btn" onclick="handleChatSend()" title="Send">
+            <span class="material-symbols-rounded">arrow_upward</span>
+          </button>
+        </div>
+        <p class="panel-disclaimer">Gemini can make mistakes</p>
+      </div>
+    </div>
+
+    <!-- Top-right bar -->
+    <div class="topbar">
+      <button class="share-btn">
+        <span class="material-symbols-rounded">share</span>
+        Share
+      </button>
+      <img src="assets/avatar-1.png" alt="Rakshit" class="topbar-avatar">
+    </div>
+
+    <!-- Right tool clusters -->
+    <div class="tools">
+      <div class="tool-cluster">
+        <button class="tool-btn" id="lassoBtn" onclick="toggleLasso()" title="Draw area">
+          <span class="material-symbols-rounded">highlight_alt</span>
+        </button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" id="editBtn" onclick="toggleEditMode()" title="Edit route">
+          <span class="material-symbols-rounded">edit</span>
+        </button>
+      </div>
+      <div class="tool-cluster">
+        <button class="tool-btn" onclick="zoomIn()" title="Zoom in">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" onclick="zoomOut()" title="Zoom out">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Route info bar -->
+    <div class="route-info-bar" id="routeInfoBar">
+      <div class="rinfo-item">
+        <span class="material-symbols-rounded">directions_car</span>
+        <span id="rInfoDist">—</span>
+      </div>
+      <span class="rinfo-sep">·</span>
+      <div class="rinfo-item">
+        <span class="material-symbols-rounded">schedule</span>
+        <span id="rInfoTime">—</span>
+      </div>
+      <span class="rinfo-sep" id="rInfoStopsSep">·</span>
+      <div class="rinfo-item" id="rInfoStopsItem">
+        <span class="material-symbols-rounded">place</span>
+        <span id="rInfoStops">—</span>
+      </div>
+    </div>
+
+    <!-- Segment selected card -->
+    <div class="segment-card" id="segmentCard">
+      <span class="segment-card-label">Remove connection?</span>
+      <button class="segment-card-delete" onclick="deleteSelectedSegment()">
+        <span class="material-symbols-rounded">delete</span>
+        Remove
+      </button>
+      <button class="segment-card-cancel" onclick="deselectSegment()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <!-- Complete button -->
+    <button class="auto-complete-btn" id="autoCompleteBtn" onclick="autoCompleteRoute()" style="display:none">
+      <span class="material-symbols-rounded">draw</span>
+      Complete
+    </button>
+
+    <!-- Draw mode hint -->
+    <div class="draw-hint">Draw a shape on the map to search that area</div>
+
+    <!-- Floating map search bar (appears after drawing a shape) -->
+    <div class="map-bar" id="mapBar">
+      <img src="assets/gemini-spark.png" alt="" class="map-bar-spark">
+      <input type="text" class="map-bar-input" id="mapBarInput"
+             placeholder="What are you looking for in this area?" autocomplete="off">
+      <button class="map-bar-send" onclick="handleMapBarSend()" title="Send">
+        <span class="material-symbols-rounded">arrow_upward</span>
+      </button>
+    </div>
+
+    <!-- Edit mode hint -->
+    <div class="edit-hint" id="editHint">
+      <span class="material-symbols-rounded" style="font-size:16px">touch_app</span>
+      Drag from any stop to connect · Click a line to remove
+    </div>
+
+    <!-- Pin popup -->
+    <div id="pin-popup" class="pin-popup" hidden>
+      <img class="pin-popup-thumb" src="" alt="">
+      <div class="pin-popup-info">
+        <div class="pin-popup-name"></div>
+        <div class="pin-popup-meta">
+          <span class="pin-popup-score"></span>
+          <span class="pin-popup-reviews"></span>
+        </div>
+      </div>
+      <div class="pin-popup-summary-box" hidden>
+        <div class="pin-popup-skeleton">
+          <div class="skel-line skel-long"></div>
+          <div class="skel-line skel-long"></div>
+          <div class="skel-line skel-short"></div>
+        </div>
+        <p class="pin-popup-desc" hidden></p>
+        <span class="pin-popup-gemini">✦ Gemini</span>
+      </div>
+      <button class="pin-popup-add" id="pinPopupAddBtn" onclick="pinPopupAdd()" hidden>Save place</button>
+    </div>
+
+  </div><!-- /stage -->
+
+  <script src="../iteration-9/data.js"></script>
+  <script src="app.js"></script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+</body>
+</html>
