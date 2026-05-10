@@ -311,19 +311,21 @@ function createBookmarkMarkers(spots) {
   spots.forEach(spot => bookmarkMarkers.push(createSingleBookmarkMarker(spot, true)));
 }
 
+const BOOKMARK_PIN = {
+  hotels:      'assets/pin-hotel.svg',
+  restaurants: 'assets/pin-food.svg',
+  scenic:      'assets/pin-scenic.svg',
+};
+
 function createSingleBookmarkMarker(spot, visible) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40">
-    <path d="M16 0C9.373 0 4 5.373 4 12c0 9.5 12 28 12 28S28 21.5 28 12C28 5.373 22.627 0 16 0z"
-          fill="#FBBC04" stroke="white" stroke-width="1.5"/>
-    <path d="M11.5 7h9v14l-4.5-3.5L11.5 21V7z" fill="white"/>
-  </svg>`;
+  const pinUrl = BOOKMARK_PIN[spot.category] || 'assets/pin-hotel.svg';
   const marker = new google.maps.Marker({
     position: { lat: spot.lat, lng: spot.lng },
     map: visible ? map : null,
     icon: {
-      url:        'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
-      scaledSize: new google.maps.Size(32, 40),
-      anchor:     new google.maps.Point(16, 40),
+      url:        pinUrl,
+      scaledSize: new google.maps.Size(44, 44),
+      anchor:     new google.maps.Point(22, 44),
     },
     title:  spot.name,
     zIndex: 15,
@@ -338,17 +340,13 @@ function startBookmarkDrag(spot, domEvent) {
   draggingBookmarkSpot = spot;
   map.setOptions({ draggable: false, gestureHandling: 'none' });
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40">
-    <path d="M16 0C9.373 0 4 5.373 4 12c0 9.5 12 28 12 28S28 21.5 28 12C28 5.373 22.627 0 16 0z"
-          fill="#FBBC04" stroke="white" stroke-width="1.5"/>
-    <path d="M11.5 7h9v14l-4.5-3.5L11.5 21V7z" fill="white"/>
-  </svg>`;
-
-  bookmarkGhost = document.createElement('div');
-  bookmarkGhost.id = 'bookmark-ghost';
-  bookmarkGhost.innerHTML = svg;
-  bookmarkGhost.style.left = (domEvent.clientX - 16) + 'px';
-  bookmarkGhost.style.top  = (domEvent.clientY - 40) + 'px';
+  bookmarkGhost = document.createElement('img');
+  bookmarkGhost.id     = 'bookmark-ghost';
+  bookmarkGhost.src    = BOOKMARK_PIN[spot.category] || 'assets/pin-hotel.svg';
+  bookmarkGhost.width  = 44;
+  bookmarkGhost.height = 44;
+  bookmarkGhost.style.left = (domEvent.clientX - 22) + 'px';
+  bookmarkGhost.style.top  = (domEvent.clientY - 44) + 'px';
   document.body.appendChild(bookmarkGhost);
 }
 
@@ -405,7 +403,7 @@ function clearPinPopupTimers() {
 function typewriteText(el, text, i = 0) {
   if (!pinPopupSpot) return;
   el.textContent = text.slice(0, i);
-  if (i < text.length) pinPopupTimers.push(setTimeout(() => typewriteText(el, text, i + 1), 16));
+  if (i < text.length) pinPopupTimers.push(setTimeout(() => typewriteText(el, text, i + 1), 11));
 }
 
 function showPinPopup(spot, clientX, clientY) {
@@ -436,8 +434,8 @@ function showPinPopup(spot, clientX, clientY) {
   addBtn.disabled    = !!already;
 
   const w = 240, h = 380;
-  const left = Math.min(Math.max(clientX - w - 16, 8), window.innerWidth  - w - 8);
-  const top  = Math.min(Math.max(clientY - h / 2,  8), window.innerHeight - h - 8);
+  const left = Math.min(Math.max(clientX - w - 24, 8), window.innerWidth  - w - 8);
+  const top  = Math.min(Math.max(clientY - 36,      8), window.innerHeight - h - 8);
   popup.style.left = left + 'px';
   popup.style.top  = top  + 'px';
 
