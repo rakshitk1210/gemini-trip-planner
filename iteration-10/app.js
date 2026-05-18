@@ -773,11 +773,16 @@ function syncRouteStopsList() {
   list.innerHTML = inOrder.map((spotIdx, rank) => {
     const stop = allSpots[spotIdx];
     const isLast = rank === inOrder.length - 1;
+    const iconEl = isLast
+      ? `<span class="material-symbols-rounded stop-pin">location_on</span>`
+      : `<span class="material-symbols-rounded stop-circle">radio_button_unchecked</span>`;
     return `<div class="route-stop-row" data-idx="${spotIdx}">
-      <div class="stop-icon-col">
-        ${!isLast ? '<div class="stop-dot"></div>' : '<span class="material-symbols-rounded stop-pin">location_on</span>'}
-      </div>
+      <span class="material-symbols-rounded stop-drag">drag_indicator</span>
+      <div class="stop-icon-col">${iconEl}</div>
       <div class="stop-pill">${stop.name}</div>
+      <button class="stop-remove-btn" onclick="removeRouteStop(${spotIdx})" title="Remove stop">
+        <span class="material-symbols-rounded">highlight_off</span>
+      </button>
     </div>`;
   }).join('');
 
@@ -796,6 +801,13 @@ function syncRouteStopsList() {
         </div>
       </div>`).join('');
   }
+}
+
+function removeRouteStop(spotIdx) {
+  segments = segments.filter(([a, b]) => a !== spotIdx && b !== spotIdx);
+  hasEdited = true;
+  deselectSegment();
+  redraw();
 }
 
 /* ══════════════════════════════════════════════

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iteration 12 — Focus on Finding Places</title>
+  <link rel="stylesheet" href="../iteration-9/tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body data-state="idle">
+
+  <!-- ── Nav Rail ── -->
+  <nav class="rail">
+    <div class="rail-logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="14" fill="#EA4335"/>
+        <path d="M14 7C10.134 7 7 10.134 7 14c0 2.556 1.351 4.796 3.374 6.046L14 25l3.626-4.954C19.649 18.796 21 16.556 21 14c0-3.866-3.134-7-7-7zm0 9.5A2.5 2.5 0 1 1 14 11.5a2.5 2.5 0 0 1 0 5z" fill="white"/>
+      </svg>
+    </div>
+    <div class="rail-items">
+      <button class="rail-item" title="Menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+      <button class="rail-item" title="Road trip">
+        <span class="material-symbols-rounded">directions_car</span>
+        <span class="rail-label">Road trip</span>
+      </button>
+      <button class="rail-item" title="Saved">
+        <span class="material-symbols-rounded">bookmark</span>
+        <span class="rail-label">Saved</span>
+      </button>
+      <button class="rail-item" title="Recent">
+        <span class="material-symbols-rounded">history</span>
+        <span class="rail-label">Recent</span>
+      </button>
+    </div>
+    <div class="rail-bottom">
+      <button class="rail-item" title="Get app">
+        <span class="material-symbols-rounded">install_mobile</span>
+        <span class="rail-label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Stage ── -->
+  <div class="stage" id="stage">
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Draw overlay (captures mouse events in draw mode) -->
+    <div class="draw-overlay" id="drawOverlay"></div>
+
+    <!-- Right toolbar -->
+    <div class="tools">
+      <div class="tool-cluster">
+        <button class="tool-btn" onclick="zoomIn()" title="Zoom in">
+          <span class="material-symbols-rounded">add</span>
+        </button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" onclick="zoomOut()" title="Zoom out">
+          <span class="material-symbols-rounded">remove</span>
+        </button>
+      </div>
+      <div class="tool-cluster">
+        <button class="tool-btn" id="exploreBtn" onclick="startExplore()" title="Find places in area">
+          <span class="material-symbols-rounded">edit</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Draw hint label (shown while in draw-mode) -->
+    <div class="draw-hint" id="drawHint">Draw on the map to search</div>
+
+    <!-- Category chip bar — appears after drawing -->
+    <div class="chip-bar" id="chipBar">
+      <button class="chip-pill" data-cat="spots" onclick="filterByChip(this,'spots')">
+        <span class="material-symbols-rounded chip-icon">photo_camera</span>
+        Spots
+      </button>
+      <button class="chip-pill" data-cat="restaurants" onclick="filterByChip(this,'restaurants')">
+        <span class="material-symbols-rounded chip-icon">lunch_dining</span>
+        Restaurants
+      </button>
+      <button class="chip-pill" data-cat="hotels" onclick="filterByChip(this,'hotels')">
+        <span class="material-symbols-rounded chip-icon">hotel</span>
+        Hotels
+      </button>
+      <button class="chip-pill chip-pill--add" onclick="openSearch()" title="Search for a place">
+        <span class="material-symbols-rounded">add</span>
+      </button>
+    </div>
+
+    <!-- Search bar — replaces chip bar -->
+    <div class="search-bar" id="searchBar">
+      <button class="search-close-btn" onclick="closeSearch()" title="Close search">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+      <div class="search-input-wrap" id="searchInputWrap">
+        <input
+          type="text"
+          class="search-input"
+          id="searchInput"
+          placeholder="Search for a place..."
+          oninput="onSearchInput()"
+          onkeydown="onSearchKey(event)"
+        >
+        <button class="search-submit-btn" onclick="doSearch()" title="Search">
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Result count pill -->
+    <div class="result-pill" id="resultPill"></div>
+
+  </div><!-- /stage -->
+
+  <script src="app.js"></script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&callback=initMap"></script>
+</body>
+</html>

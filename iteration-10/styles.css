@@ -320,29 +320,43 @@ body[data-tab="saved"]     .tab-content[data-tab-content="saved"]     { display:
 
 /* ── Route tab ── */
 .tab-content[data-tab-content="route"] { padding: 0; background: white; }
-.route-locations-list { display: flex; flex-direction: column; gap: 14px; padding: 24px 16px 16px; }
-.route-stop-row { display: flex; align-items: center; gap: 14px; position: relative; }
+.route-locations-list { display: flex; flex-direction: column; gap: 14px; padding: 24px 16px; }
+.route-stop-row { display: flex; align-items: center; gap: 12px; position: relative; }
+.stop-drag {
+  font-size: 16px; color: #bdc1c6; cursor: grab; flex-shrink: 0;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
 .stop-icon-col {
   width: 16px; display: flex; align-items: center;
   justify-content: center; flex-shrink: 0; position: relative;
 }
-.stop-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #9aa0a6; background: white; flex-shrink: 0; }
-.route-stop-row:last-child .stop-dot { display: none; }
-.route-stop-row:not(:last-child) .stop-dot { display: block; }
-.route-stop-row:not(:last-child) .stop-pin { display: none; }
-.route-stop-row:last-child .stop-pin { display: block; }
-.stop-pin { font-size: 20px; color: #ea4335; }
+.stop-circle {
+  font-size: 15px; color: #9aa0a6; flex-shrink: 0;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+.stop-pin {
+  font-size: 18px; color: #ea4335; flex-shrink: 0;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
 .route-stop-row:not(:last-child) .stop-icon-col::after {
-  content: ''; position: absolute; left: 50%; top: 18px;
-  transform: translateX(-50%); width: 1.5px; height: 34px;
-  background: repeating-linear-gradient(to bottom, #9aa0a6 0px, #9aa0a6 3px, transparent 3px, transparent 7px);
+  content: ''; position: absolute; left: 50%; top: 17px;
+  transform: translateX(-50%); width: 1.5px; height: 31px;
+  background: repeating-linear-gradient(to bottom, #bdc1c6 0px, #bdc1c6 3px, transparent 3px, transparent 7px);
 }
 .stop-pill {
-  flex: 1; border: 1px solid #9aa0a6; border-radius: 8px;
-  padding: 12px; font-size: 12px;
+  flex: 1; border: 1px solid #202124; border-radius: 8px;
+  padding: 8px 12px; font-size: 12px; font-weight: 500;
   font-family: var(--font-family-primary);
-  color: var(--color-text-primary); line-height: 1; background: white;
+  color: var(--color-text-secondary); line-height: 1.33; background: white;
 }
+.stop-remove-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: #bdc1c6; display: flex; align-items: center; flex-shrink: 0;
+  border-radius: 50%; transition: color 0.15s;
+}
+.stop-remove-btn:hover { color: #5f6368; }
+.stop-remove-btn .material-symbols-rounded { font-size: 18px; }
 .route-section-divider { height: 4px; background: #f8f9fa; flex-shrink: 0; }
 .route-info-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid #1967d2; }
 .route-info-main { display: flex; gap: 12px; align-items: flex-start; }
