@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iteration 12 — Map-First</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+</head>
+<body data-state="home">
+
+  <!-- ── Nav Rail ── -->
+  <nav class="rail">
+    <div class="rail-logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="14" cy="14" r="14" fill="#EA4335"/>
+        <path d="M14 7C10.134 7 7 10.134 7 14c0 2.556 1.351 4.796 3.374 6.046L14 25l3.626-4.954C19.649 18.796 21 16.556 21 14c0-3.866-3.134-7-7-7zm0 9.5A2.5 2.5 0 1 1 14 11.5a2.5 2.5 0 0 1 0 5z" fill="white"/>
+      </svg>
+    </div>
+    <div class="rail-items">
+      <button class="rail-item" title="Menu">
+        <span class="material-symbols-rounded">menu</span>
+      </button>
+      <button class="rail-item" title="Road trip">
+        <span class="material-symbols-rounded">directions_car</span>
+        <span class="rail-label">Road trip</span>
+      </button>
+      <button class="rail-item" title="Saved">
+        <span class="material-symbols-rounded">bookmark</span>
+        <span class="rail-label">Saved</span>
+      </button>
+      <button class="rail-item" title="Recent">
+        <span class="material-symbols-rounded">history</span>
+        <span class="rail-label">Recent</span>
+      </button>
+    </div>
+    <div class="rail-bottom">
+      <button class="rail-item" title="Get app">
+        <span class="material-symbols-rounded">install_mobile</span>
+        <span class="rail-label">Get app</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Stage ── -->
+  <div class="stage">
+
+    <!-- ═══════════════════════════════════════
+         HOME SCREEN
+    ═══════════════════════════════════════ -->
+    <main class="home-screen" id="homeScreen">
+      <div class="home-content">
+
+        <section class="home-hero">
+          <div class="hero-heading-group">
+            <div class="gemini-logo-wrap">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 1C14 1 14.15 13.85 1 14C14.15 14.15 14 27 14 27C14 27 13.85 14.15 27 14C13.85 13.85 14 1 14 1Z" fill="url(#gemGrad)"/>
+                <defs>
+                  <linearGradient id="gemGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#4285F4"/>
+                    <stop offset="40%" stop-color="#9C27B0"/>
+                    <stop offset="75%" stop-color="#EA4335"/>
+                    <stop offset="100%" stop-color="#FBBC04"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h1 class="home-heading">Hey Rakshit, where are you planning to go on your road trip?</h1>
+          </div>
+
+          <div class="prompt-card">
+            <div class="prompt-body">
+              <p class="prompt-text">Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.</p>
+            </div>
+            <div class="prompt-actions">
+              <div class="prompt-actions-left">
+                <span class="material-symbols-rounded prompt-add-icon">add</span>
+                <div class="vehicle-selector-wrap">
+                  <button class="vehicle-chip" onclick="toggleVehicleDropdown(event)">
+                    <span class="material-symbols-rounded vehicle-chip-icon" id="vehicleChipIcon">local_gas_station</span>
+                    <span class="vehicle-chip-label" id="vehicleChipLabel">Gas</span>
+                    <span class="material-symbols-rounded vehicle-chip-chevron" id="vehicleChipChevron">expand_more</span>
+                  </button>
+                  <div class="vehicle-dropdown" id="vehicleDropdown">
+                    <button class="vehicle-option" onclick="selectVehicle(this, 'Gas', 'local_gas_station')">
+                      <div class="vehicle-radio vehicle-radio--selected"></div>
+                      <span class="vehicle-option-label">Gas</span>
+                      <span class="material-symbols-rounded vehicle-option-icon">local_gas_station</span>
+                    </button>
+                    <div class="vehicle-option-divider"></div>
+                    <button class="vehicle-option" onclick="selectVehicle(this, 'Electric', 'power')">
+                      <div class="vehicle-radio"></div>
+                      <span class="vehicle-option-label">Electric</span>
+                      <span class="material-symbols-rounded vehicle-option-icon">power</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="prompt-actions-right">
+                <span class="prompt-model-label">Gemini 3.1 Pro</span>
+                <button class="prompt-send-btn" onclick="goToMap()">
+                  <span class="material-symbols-rounded">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="home-trips">
+          <h2 class="planned-trips-heading">Planned roadtrips</h2>
+          <div class="trips-grid">
+
+            <div class="trip-card" onclick="goToMap()">
+              <img class="trip-card-img" src="https://picsum.photos/seed/iceland1/271/160" alt="Iceland Golden Circle">
+              <div class="trip-card-footer">
+                <div class="trip-card-text">
+                  <div class="trip-card-name">Iceland Golden Circle</div>
+                  <div class="trip-card-time">Just now</div>
+                </div>
+                <div class="avatar-stack">
+                  <img class="avatar avatar--front" src="https://picsum.photos/seed/11/26/26" alt="">
+                  <img class="avatar" src="https://picsum.photos/seed/22/26/26" alt="">
+                </div>
+              </div>
+            </div>
+
+            <div class="trip-card" onclick="goToMap()">
+              <img class="trip-card-img" src="https://picsum.photos/seed/iceland2/271/160" alt="Iceland South Coast">
+              <div class="trip-card-footer">
+                <div class="trip-card-text">
+                  <div class="trip-card-name">Iceland South Coast</div>
+                  <div class="trip-card-time">Just now</div>
+                </div>
+                <div class="avatar-stack">
+                  <img class="avatar avatar--front" src="https://picsum.photos/seed/33/26/26" alt="">
+                  <img class="avatar" src="https://picsum.photos/seed/44/26/26" alt="">
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+      <div class="home-disclaimer">Gemini can make mistakes</div>
+    </main>
+
+    <!-- ═══════════════════════════════════════
+         MAP VIEW
+    ═══════════════════════════════════════ -->
+    <div class="map-view" id="mapView">
+
+      <!-- Left Panel -->
+      <div class="panel">
+
+        <!-- Scrollable Content Area -->
+        <div class="panel-content" id="panelContent">
+
+          <!-- ── Route Pane ── -->
+          <div class="tab-pane" id="paneroute">
+            <ul class="stop-list" id="stopList">
+              <!-- Rendered by JS -->
+            </ul>
+
+            <div class="route-spacer"></div>
+
+            <div class="route-info-card">
+              <div class="route-info-icon">
+                <span class="material-symbols-rounded">directions_car</span>
+              </div>
+              <div class="route-info-body">
+                <div class="route-name-row">
+                  <span class="route-name">via Hringvegur</span>
+                  <span class="route-time">5 hr 20 min</span>
+                </div>
+                <div class="route-stats-row">
+                  <span class="route-stat">Scenic route along Route 1</span>
+                  <span class="route-distance">236 miles</span>
+                </div>
+                <div class="route-btns">
+                  <button class="route-text-btn">Details</button>
+                  <button class="route-text-btn">Preview</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="route-spacer"></div>
+
+            <!-- Skeleton loaders (shown while search is in progress) -->
+            <div id="searchSkeleton" class="search-skeleton">
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+            </div>
+
+            <!-- Hotel results (shown after search completes) -->
+            <div id="searchResultsSection" class="search-results-section">
+              <div class="search-results-label">Hotels Along Your Iceland Route</div>
+              <div class="search-results-list" id="searchResultsList"></div>
+            </div>
+
+            <!-- Saved places section (shown when anything is bookmarked) -->
+            <div id="savedSection" class="saved-section" style="display:none">
+              <div class="saved-heading">Saved</div>
+              <ul class="saved-list" id="savedList"></ul>
+            </div>
+          </div>
+
+        </div><!-- /panel-content -->
+
+      </div><!-- /panel -->
+
+      <!-- Map Area -->
+      <div class="map-area">
+        <div id="map"></div>
+
+        <!-- Centered Prompt Bar -->
+        <div class="map-prompt-bar" id="mapPromptBar">
+          <span class="material-symbols-rounded map-prompt-icon">auto_awesome</span>
+          <input type="text" class="map-prompt-input" id="mapPromptInput" placeholder="Ask about your trip...">
+          <button class="map-prompt-send" onclick="submitSearch()">
+            <span class="material-symbols-rounded">arrow_forward</span>
+          </button>
+        </div>
+
+        <!-- Showing hotels badge (visible while hotel pins are on map) -->
+        <div class="showing-hotels-badge" id="showingHotelsBadge" onclick="dismissHotelPins()" style="display:none">
+          <span class="showing-hotels-label">Showing hotels</span>
+          <span class="material-symbols-rounded showing-hotels-close">close</span>
+        </div>
+
+        <!-- Place Card (shown on pin click) -->
+        <div class="place-card" id="placeCard">
+          <div class="place-card-img-wrap">
+            <img class="place-card-img" id="placeCardImg" src="" alt="">
+            <button class="place-card-close" onclick="closePlaceCard()">
+              <span class="material-symbols-rounded">close</span>
+            </button>
+            <button class="place-card-nav place-card-nav--prev">
+              <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+            <button class="place-card-nav place-card-nav--next">
+              <span class="material-symbols-rounded">chevron_right</span>
+            </button>
+            <div class="place-card-dots">
+              <span class="place-card-dot place-card-dot--active"></span>
+              <span class="place-card-dot"></span>
+              <span class="place-card-dot"></span>
+              <span class="place-card-dot"></span>
+            </div>
+          </div>
+          <div class="place-card-info">
+            <div class="place-card-text">
+              <div class="place-card-name" id="placeCardName"></div>
+              <div class="place-card-rating">
+                <span class="place-card-rating-score">4.7</span>
+                <span class="material-symbols-rounded place-card-star">star</span>
+                <span class="place-card-rating-count">(234)</span>
+              </div>
+            </div>
+            <div class="place-card-actions">
+              <button class="place-card-action-btn place-card-action-btn--ghost" id="placeCardBookmarkBtn" onclick="toggleSave()">
+                <div class="place-card-btn-circle">
+                  <span class="material-symbols-rounded" id="placeCardBookmarkIcon">bookmark_border</span>
+                </div>
+              </button>
+              <button class="place-card-action-btn place-card-action-btn--blue">
+                <div class="place-card-btn-circle">
+                  <span class="material-symbols-rounded">directions</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top-right controls -->
+        <div class="map-topright">
+          <button class="share-btn">
+            <span class="material-symbols-rounded">share</span>
+            Share
+          </button>
+          <img class="user-avatar" src="https://picsum.photos/seed/rakshit/40/40" alt="User">
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar-card">
+            <button class="toolbar-zoom-btn" onclick="zoomIn()">
+              <span class="material-symbols-rounded">add</span>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-zoom-btn" onclick="zoomOut()">
+              <span class="material-symbols-rounded">remove</span>
+            </button>
+          </div>
+          <div class="toolbar-card toolbar-card--tools">
+            <button class="toolbar-tool-btn">
+              <span class="material-symbols-rounded">draw</span>
+            </button>
+            <button class="toolbar-tool-btn">
+              <span class="material-symbols-rounded">wrap_text</span>
+            </button>
+            <button class="toolbar-tool-btn">
+              <span class="material-symbols-rounded">mode_comment</span>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /map-area -->
+
+    </div><!-- /map-view -->
+
+  </div><!-- /stage -->
+
+  <script src="app.js"></script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBf8PLNhxkojFJyyNdctLE57nexC2c1a8A&libraries=places&callback=initMap"></script>
+</body>
+</html>
