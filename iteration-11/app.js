@@ -1,183 +1,130 @@
 'use strict';
 
 /* ══════════════════════════════════════════════
-   PLACE DATA — Capitol Hill, Seattle
+   IMAGE CACHE  (Google Places Photos API)
+   Uses the same API key already in index.html —
+   requires &libraries=places on the script tag.
 ══════════════════════════════════════════════ */
 
-const PLACES = [
-  // Restaurants
-  { id: 'ch-r0', cat: 'restaurants', name: 'Oddfellows Café + Bar',    lat: 47.6228, lng: -122.3199, rating: 4.6, seed: 431, desc: 'Neighborhood favorite with serious espresso and all-day brunch.' },
-  { id: 'ch-r1', cat: 'restaurants', name: 'Tacos Chukis',             lat: 47.6195, lng: -122.3218, rating: 4.7, seed: 218, desc: 'Cash-preferred taqueria with genuinely tiny prices and genuinely great tacos.' },
-  { id: 'ch-r2', cat: 'restaurants', name: 'Via Tribunali',            lat: 47.6243, lng: -122.3224, rating: 4.6, seed: 823, desc: 'Wood-fired Neapolitan pizza in a tight, loud, candlelit room.' },
-  { id: 'ch-r3', cat: 'restaurants', name: 'Poppy',                    lat: 47.6253, lng: -122.3195, rating: 4.4, seed: 756, desc: 'Inventive seasonal menus from a James Beard-nominated kitchen.' },
-  { id: 'ch-r4', cat: 'restaurants', name: 'Stateside',                lat: 47.6217, lng: -122.3203, rating: 4.5, seed: 319, desc: 'French-Vietnamese fusion — bánh mì and pâté en croûte, side by side.' },
-  { id: 'ch-r5', cat: 'restaurants', name: 'Nue',                      lat: 47.6238, lng: -122.3214, rating: 4.4, seed: 542, desc: 'Global street food done with precision. Happy hour Tue–Fri 4–6pm.' },
-  { id: 'ch-r6', cat: 'restaurants', name: 'Taylor Shellfish Farms',   lat: 47.6270, lng: -122.3189, rating: 4.5, seed: 677, desc: 'Fresh oysters shucked to order. Simple room, exceptional product.' },
-  { id: 'ch-r7', cat: 'restaurants', name: "Rachel's Ginger Beer",     lat: 47.6221, lng: -122.3196, rating: 4.6, seed: 901, desc: 'House-brewed ginger beer in 20+ flavors. No alcohol, no apology.' },
-  // Spots (views + activities + hidden gems)
-  { id: 'ch-s0', cat: 'spots', name: 'Cal Anderson Park',        lat: 47.6165, lng: -122.3196, rating: 4.8, seed: 163, desc: 'Beloved reservoir park at the center of the neighborhood. Locals, dogs, bocce.' },
-  { id: 'ch-s1', cat: 'spots', name: 'Volunteer Park',           lat: 47.6379, lng: -122.3162, rating: 4.7, seed: 485, desc: 'Water tower with 360° panorama, conservatory, and the Seattle Asian Art Museum.' },
-  { id: 'ch-s2', cat: 'spots', name: 'Broadway + Pine',          lat: 47.6228, lng: -122.3215, rating: 4.5, seed: 729, desc: "The intersection everyone photographs. Capitol Hill's social center." },
-  { id: 'ch-s3', cat: 'spots', name: 'Lake View Cemetery',       lat: 47.6393, lng: -122.3156, rating: 4.6, seed: 234, desc: "Bruce Lee's grave, city views, and a level of quiet rare in Seattle." },
-  { id: 'ch-s4', cat: 'spots', name: 'Neumos',                   lat: 47.6222, lng: -122.3205, rating: 4.5, seed: 267, desc: 'The indie and alternative venue. If a show is on, do not miss it.' },
-  { id: 'ch-s5', cat: 'spots', name: 'Elliott Bay Book Company', lat: 47.6189, lng: -122.3210, rating: 4.9, seed: 112, desc: 'Labyrinthine independent bookstore with a serious events calendar.' },
-  { id: 'ch-s6', cat: 'spots', name: 'Melrose Market',           lat: 47.6227, lng: -122.3230, rating: 4.6, seed: 556, desc: 'Tucked-away indoor food hall: butcher, wine shop, florist, café.' },
-  { id: 'ch-s7', cat: 'spots', name: 'Chophouse Row',            lat: 47.6235, lng: -122.3228, rating: 4.4, seed: 723, desc: 'Boutique retail arcade with local designers and a hidden courtyard.' },
+// English query overrides for Icelandic place names
+const SEARCH_OVERRIDES = {
+  'Þingvellir':     'Thingvellir National Park Iceland',
+  'Kerið Crater':   'Kerid Crater Iceland',
+  'Secret Lagoon':  'Secret Lagoon Fontana Iceland',
+  'Vík':            'Vik Iceland',
+  'Víkurfjara':     'Vikurfjara black sand beach Iceland',
+  'Dyrhólaey':      'Dyrholaey Iceland',
+  'Skógafoss':      'Skogafoss waterfall Iceland',
+  'Seljalandsfoss': 'Seljalandsfoss waterfall Iceland',
+  'Reykjavík':      'Reykjavik Iceland',
+};
+
+const placeImages  = new Map(); // name → { small: url, thumb: url }
+let   placesService = null;     // set in initMap() once the SDK is ready
+
+function fetchPlaceImage(name) {
+  if (placeImages.has(name) || !placesService) return Promise.resolve();
+  const query = SEARCH_OVERRIDES[name] ?? `${name} Iceland`;
+  return new Promise(resolve => {
+    placesService.findPlaceFromQuery(
+      { query, fields: ['photos'] },
+      (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results?.[0]?.photos?.[0]) {
+          const photo = results[0].photos[0];
+          placeImages.set(name, {
+            small: photo.getUrl({ maxWidth: 800 }),
+            thumb: photo.getUrl({ maxWidth: 100 }),
+          });
+        }
+        resolve();
+      }
+    );
+  });
+}
+
+// Returns a cached Google photo URL, or falls back to picsum
+function getImg(name, seed, size = 'small') {
+  const dims  = size === 'thumb' ? '48/48' : size === 'micro' ? '56/56' : '320/176';
+  const entry = placeImages.get(name);
+  const url   = entry && (entry[size] ?? (size === 'micro' ? entry.thumb : null) ?? entry.small);
+  return url || `https://picsum.photos/seed/${seed}/${dims}`;
+}
+
+async function preloadImages() {
+  const names = [
+    ...TRIP_STOPS.map(s => s.name),
+    ...HOTELS.map(h => h.name),
+    'Iceland Golden Circle',
+    'Iceland South Coast',
+  ];
+  await Promise.all(names.map(fetchPlaceImage));
+  updateStaticImages();
+}
+
+function updateStaticImages() {
+  const dayNames = ['Geysir', 'Gullfoss', 'Víkurfjara', 'Skógafoss'];
+  document.querySelectorAll('.day-img').forEach((img, i) => {
+    const entry = placeImages.get(dayNames[i]);
+    if (entry) img.src = entry.small;
+  });
+
+  const tripNames = ['Iceland Golden Circle', 'Iceland South Coast'];
+  document.querySelectorAll('.trip-card-img').forEach((img, i) => {
+    const entry = placeImages.get(tripNames[i]);
+    if (entry) img.src = entry.small;
+  });
+}
+
+/* ══════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════ */
+
+const HOTELS = [
+  { name: 'Hótel Selfoss',      stars: 4.4, price: '$178', desc: 'Modern, best breakfast on the route. Skip Saturday nights — the club gets loud.',     seed: 2201, lat: 63.9343, lng: -20.9977 },
+  { name: 'Hótel Kvika',        stars: 4.7, price: '$145', desc: 'Just outside Selfoss. Hot tub and sauna, dark skies, great value.',                   seed: 2342, lat: 63.9200, lng: -20.8500 },
+  { name: 'Hotel Vatnsholt',    stars: 4.3, price: '$122', desc: 'Countryside base between Selfoss and Hella. Quiet, good Day 1 stopover.',              seed: 2487, lat: 63.8200, lng: -20.3800 },
+  { name: 'Stracta Hotel',      stars: 4.1, price: '$95',  desc: 'Hella. Chalet-style rooms, some with private hot tubs. Ask for a renovated room.',    seed: 2618, lat: 63.8336, lng: -20.3900 },
+  { name: 'Aurora Igloo South', stars: 4.3, price: '$320', desc: 'Hella. Clear igloos — novelty stay, fun any season.',                                 seed: 2755, lat: 63.8280, lng: -20.4100 },
+  { name: 'Hótel Skógafoss',    stars: 4.3, price: '$229', desc: 'Right at Skógafoss. Some rooms face the waterfall. Excellent restaurant.',             seed: 2901, lat: 63.5322, lng: -19.5133 },
+  { name: 'Hótel Kría',         stars: 4.5, price: '$195', desc: 'Vik. Newest hotel in town, game room, good on-site dinner. Best Day 1 endpoint.',     seed: 3034, lat: 63.4215, lng: -19.0020 },
+  { name: 'The Barn',           stars: 4.5, price: '$68',  desc: 'Just outside Vik. Private rooms, ocean views, great bar. Budget pick.',               seed: 3122, lat: 63.4120, lng: -19.0260 },
 ];
 
-const CAT_CFG = {
-  restaurants: { fill: '#FA7B17' },
-  spots:       { fill: '#1a73e8' },
-  hotels:      { fill: '#34A853' },
-};
+const TRIP_STOPS = [
+  { id: 1,  name: 'Þingvellir',     lat: 64.2558, lng: -21.1296, seed: 101  },
+  { id: 2,  name: 'Geysir',         lat: 64.3120, lng: -20.3003, seed: 204  },
+  { id: 3,  name: 'Gullfoss',       lat: 64.3269, lng: -20.1209, seed: 318  },
+  { id: 6,  name: 'Seljalandsfoss', lat: 63.6158, lng: -19.9886, seed: 612  },
+  { id: 11, name: 'Reykjavík',      lat: 64.1355, lng: -21.8954, seed: 1122 },
+];
 
 /* ══════════════════════════════════════════════
    STATE
 ══════════════════════════════════════════════ */
 
-let map           = null;
-let mapReady      = false;
-let appState      = 'idle';   // idle | draw-mode | results
+const ITINERARY_INTRO = 'Here is your Iceland road trip itinerary';
+const DAY1_LABEL      = 'Day 1 · Golden Circle';
+const DAY1_DESC       = 'Start at Þingvellir National Park, watch Geysir erupt on cue, marvel at Gullfoss waterfall, then walk behind the curtain of Seljalandsfoss before the scenic drive back to Reykjavík.';
+const DAY2_LABEL      = 'Day 2 · South Coast';
+const DAY2_DESC       = "A relaxed morning exploring Reykjavík's old harbour and colourful streets before heading home.";
 
-// Draw engine
-let drawMode      = false;
-let isDrawing     = false;
-let drawPoints    = [];
-let drawStroke    = null;     // google.maps.Polyline (live stroke)
-let drawnShape    = null;     // google.maps.Polygon (committed shape)
-let drawListeners = [];
-
-// Results
-let visiblePlaces = [];
-let placeMarkers  = {};       // placeId → google.maps.Marker
-let activeChipCat = null;     // single-select, null = all
-
-/* ══════════════════════════════════════════════
-   PHOTO PIN — custom OverlayView
-   Matches Figma: 36×42 teardrop shell, 34×34
-   circular photo, 11px name label below.
-══════════════════════════════════════════════ */
-
-// Teardrop SVG path for a 36×42 viewBox.
-// Circle (r≈17) centred at (18,18); tip at (18,41).
-const TEARDROP_PATH =
-  'M18 1C8.059 1 1 8.059 1 18C1 28.5 18 41 18 41C18 41 35 28.5 35 18C35 8.059 27.941 1 18 1Z';
-
-class PhotoPin extends google.maps.OverlayView {
-  constructor(place) {
-    super();
-    this.place  = place;
-    this.el     = null;
-    this._op    = 0;   // start transparent for fade-in
-    this._z     = 10;
-  }
-
-  onAdd() {
-    const p   = this.place;
-    const el  = document.createElement('div');
-    el.className    = 'photo-pin';
-    el.style.opacity = this._op;
-    el.style.zIndex  = this._z;
-    el.innerHTML = `
-      <div class="pin-shell">
-        <svg class="pin-shape" viewBox="0 0 36 42" width="36" height="42" xmlns="http://www.w3.org/2000/svg">
-          <path d="${TEARDROP_PATH}" fill="white" stroke="#DADCE0" stroke-width="1"/>
-        </svg>
-        <img class="pin-photo" src="https://picsum.photos/seed/${p.seed}/68/68" alt="">
-      </div>
-      <div class="pin-name">${p.name}</div>
-    `;
-    this.el = el;
-    this.getPanes().overlayMouseTarget.appendChild(el);
-  }
-
-  draw() {
-    if (!this.el) return;
-    const proj = this.getProjection();
-    if (!proj) return;
-    const pt = proj.fromLatLngToDivPixel(new google.maps.LatLng(this.place.lat, this.place.lng));
-    if (!pt) return;
-    // Centre pin horizontally; align teardrop tip (y=41 of 42px) with the lat/lng point
-    this.el.style.left = Math.round(pt.x - 38) + 'px';
-    this.el.style.top  = Math.round(pt.y - 41) + 'px';
-  }
-
-  onRemove() {
-    if (this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
-    this.el = null;
-  }
-
-  setOpacity(op) {
-    this._op = op;
-    if (this.el) this.el.style.opacity = op;
-  }
-
-  setZIndex(z) {
-    this._z = z;
-    if (this.el) this.el.style.zIndex = z;
-  }
-}
-
-/* ══════════════════════════════════════════════
-   COORDINATE HELPERS
-══════════════════════════════════════════════ */
-
-function latLngFromEvent(e) {
-  if (!map) return null;
-  const rect = document.getElementById('map').getBoundingClientRect();
-  let bounds = map.getBounds();
-
-  if (!bounds) {
-    const center = map.getCenter();
-    if (!center) return null;
-    const scale    = 256 * Math.pow(2, map.getZoom());
-    const lngPerPx = 360 / scale;
-    const latPerPx = 360 / scale;
-    const hw = rect.width  / 2 * lngPerPx;
-    const hh = rect.height / 2 * latPerPx;
-    bounds = {
-      getNorthEast: () => ({ lat: () => center.lat() + hh, lng: () => center.lng() + hw }),
-      getSouthWest: () => ({ lat: () => center.lat() - hh, lng: () => center.lng() - hw }),
-    };
-  }
-
-  const ne = bounds.getNorthEast(), sw = bounds.getSouthWest();
-  return {
-    lat: ne.lat() - ((e.clientY - rect.top)  / rect.height) * (ne.lat() - sw.lat()),
-    lng: sw.lng() + ((e.clientX - rect.left) / rect.width)  * (ne.lng() - sw.lng()),
-  };
-}
-
-function latLngToScreenXY(lat, lng) {
-  if (!map) return null;
-  const bounds = map.getBounds();
-  if (!bounds) return null;
-  const rect = document.getElementById('map').getBoundingClientRect();
-  const ne = bounds.getNorthEast(), sw = bounds.getSouthWest();
-  return {
-    x: rect.left + ((lng - sw.lng()) / (ne.lng() - sw.lng())) * rect.width,
-    y: rect.top  + ((ne.lat() - lat) / (ne.lat() - sw.lat())) * rect.height,
-  };
-}
-
-function polygonCentroid(points) {
-  return {
-    lat: points.reduce((s, p) => s + p.lat, 0) / points.length,
-    lng: points.reduce((s, p) => s + p.lng, 0) / points.length,
-  };
-}
-
-function pointInPolygon(point, polygon) {
-  let inside = false;
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].lng, yi = polygon[i].lat;
-    const xj = polygon[j].lng, yj = polygon[j].lat;
-    const intersect = ((yi > point.lat) !== (yj > point.lat)) &&
-      (point.lng < (xj - xi) * (point.lat - yi) / (yj - yi) + xi);
-    if (intersect) inside = !inside;
-  }
-  return inside;
-}
+let map              = null;
+let mapReady         = false;
+let routePolyline    = null;
+let stopMarkers      = {};
+let appState         = 'home';
+let activeStops      = [...TRIP_STOPS];
+let SquarePin        = null;
+let HotelPin         = null;
+let BookmarkPin      = null;
+let animationPending = false;
+let dragSrcIndex     = null;
+let draggingHotelIdx = null;
+let searchState      = null; // null | 'loading' | 'results'
+let hotelMarkers     = [];
+let savedPlaces      = {};   // keyed by 'hotel-{idx}' or 'stop-{id}'
+let savedPinMarkers  = {};
+let currentCardData  = null; // { key, name, seed, price, stars, lat, lng }
 
 /* ══════════════════════════════════════════════
    STATE MACHINE
@@ -188,14 +135,186 @@ function setState(state) {
   document.body.dataset.state = state;
 }
 
+function goToMap() {
+  if (appState !== 'home') return;
+
+  animationPending = true;
+
+  // ── 1. Exit home screen ──
+  const homeScreen = document.getElementById('homeScreen');
+  homeScreen.style.animation = 'screenExitLeft 0.28s ease forwards';
+
+  setTimeout(() => {
+    // ── 2. Switch state, reset itinerary sections ──
+    setState('plan-ai');
+    showTab('plan-ai');
+    renderStopList();
+
+    const intro = document.querySelector('.itinerary-intro');
+    const sec1  = document.getElementById('daySection1');
+    const sec2  = document.getElementById('daySection2');
+
+    intro.classList.remove('is-visible');
+    intro.textContent = '';
+    sec1.classList.remove('is-visible');
+    sec1.querySelector('.day-label').textContent = '';
+    sec1.querySelector('.day-desc').textContent  = '';
+    sec1.querySelector('.day-images').style.opacity = '0';
+    document.querySelector('.day-divider').classList.remove('is-visible');
+    sec2.classList.remove('is-visible');
+    sec2.querySelector('.day-label').textContent = '';
+    sec2.querySelector('.day-desc').textContent  = '';
+    sec2.querySelector('.day-images').style.opacity = '0';
+
+    // ── 3. Fade map view in ──
+    const mapView = document.getElementById('mapView');
+    mapView.style.animation = 'screenEnter 0.32s ease forwards';
+    setTimeout(() => { mapView.style.animation = ''; }, 320);
+
+    // ── 4. Begin section typewriter after bubble settles ──
+    setTimeout(animateItinerary, 420);
+
+  }, 240);
+}
+
+/* Type text word-by-word into el, call done when finished */
+function typeInto(el, text, msPerWord, done) {
+  el.classList.add('is-typing');
+  const words = text.split(' ');
+  let i = 0;
+  const tick = () => {
+    if (i < words.length) {
+      el.textContent += (i === 0 ? '' : ' ') + words[i++];
+      setTimeout(tick, msPerWord);
+    } else {
+      el.classList.remove('is-typing');
+      if (done) done();
+    }
+  };
+  tick();
+}
+
+function animateItinerary() {
+  const intro = document.querySelector('.itinerary-intro');
+  const sec1  = document.getElementById('daySection1');
+  const sec2  = document.getElementById('daySection2');
+
+  // 1. Type itinerary intro
+  intro.classList.add('is-visible');
+  typeInto(intro, ITINERARY_INTRO, 48, () => {
+
+    // 2. Reveal Day 1, type label then desc
+    setTimeout(() => {
+      sec1.classList.add('is-visible');
+      typeInto(sec1.querySelector('.day-label'), DAY1_LABEL, 55, () => {
+        typeInto(sec1.querySelector('.day-desc'), DAY1_DESC, 28, () => {
+
+          // Show Day 1 images
+          sec1.querySelector('.day-images').style.opacity = '1';
+
+          // 3. Show divider, reveal Day 2, type label then desc
+          setTimeout(() => {
+            document.querySelector('.day-divider').classList.add('is-visible');
+            setTimeout(() => {
+              sec2.classList.add('is-visible');
+              typeInto(sec2.querySelector('.day-label'), DAY2_LABEL, 55, () => {
+                typeInto(sec2.querySelector('.day-desc'), DAY2_DESC, 28, () => {
+
+                  // Show Day 2 images
+                  sec2.querySelector('.day-images').style.opacity = '1';
+
+                  // 4. Render map after a short pause
+                  setTimeout(renderMapAfterAI, 360);
+
+                  // 5. Pre-fill footer with hotel search query
+                  setTimeout(() => prefillFooterInput('Show me hotels along my route'), 1200);
+                });
+              });
+            }, 160);
+          }, 320);
+        });
+      });
+    }, 180);
+  });
+}
+
+function renderMapAfterAI() {
+  animationPending = false;
+  if (!mapReady) {
+    setTimeout(renderMapAfterAI, 120);
+    return;
+  }
+  renderPins();
+  // Animate the polyline after all pins have faded in
+  setTimeout(renderPolylineAnimated, activeStops.length * 60 + 300);
+}
+
+function renderPolylineAnimated() {
+  if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+  if (activeStops.length < 2) return;
+
+  new google.maps.DirectionsService().route({
+    origin:      { lat: activeStops[0].lat,                          lng: activeStops[0].lng },
+    destination: { lat: activeStops[activeStops.length - 1].lat,     lng: activeStops[activeStops.length - 1].lng },
+    waypoints:   activeStops.slice(1, -1).map(s => ({ location: { lat: s.lat, lng: s.lng }, stopover: true })),
+    travelMode:  google.maps.TravelMode.DRIVING,
+    optimizeWaypoints: false,
+  }, (result, status) => {
+    if (status !== 'OK') return;
+    const fullPath = result.routes[0].overview_path;
+
+    routePolyline = new google.maps.Polyline({
+      path:          [fullPath[0]],
+      strokeColor:   '#1a73e8',
+      strokeWeight:  3,
+      strokeOpacity: 0.9,
+      map,
+      zIndex: 5,
+    });
+
+    // Animate: draw the full road path in ~1.5 s at ~60 fps
+    const totalFrames = 90;
+    const chunkSize   = Math.max(1, Math.ceil(fullPath.length / totalFrames));
+    let i = 1;
+    const extendPath = () => {
+      for (let j = 0; j < chunkSize && i < fullPath.length; j++, i++) {
+        routePolyline.getPath().push(fullPath[i]);
+      }
+      if (i < fullPath.length) setTimeout(extendPath, 16);
+    };
+    setTimeout(extendPath, 130);
+  });
+}
+
+function showTab(tab) {
+  const paneAi    = document.getElementById('paneplanai');
+  const paneRoute = document.getElementById('paneroute');
+  const btnAi     = document.getElementById('tabPlanAiBtn');
+  const btnRoute  = document.getElementById('tabRouteBtn');
+
+  if (tab === 'plan-ai') {
+    paneAi.classList.remove('tab-pane--hidden');
+    paneRoute.classList.add('tab-pane--hidden');
+    btnAi.classList.add('tab-btn--active');
+    btnRoute.classList.remove('tab-btn--active');
+    setState('plan-ai');
+  } else {
+    paneRoute.classList.remove('tab-pane--hidden');
+    paneAi.classList.add('tab-pane--hidden');
+    btnRoute.classList.add('tab-btn--active');
+    btnAi.classList.remove('tab-btn--active');
+    setState('route');
+  }
+}
+
 /* ══════════════════════════════════════════════
-   MAP INIT
+   MAP INIT — called by Maps API when loaded
 ══════════════════════════════════════════════ */
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 47.6219, lng: -122.3209 },
-    zoom: 14,
+    center: { lat: 63.87, lng: -20.10 },
+    zoom: 8,
     disableDefaultUI: true,
     gestureHandling: 'auto',
     styles: [
@@ -204,303 +323,681 @@ function initMap() {
       { featureType: 'road',    elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
     ],
   });
+
+  SquarePin = class extends google.maps.OverlayView {
+    constructor(stop, number) {
+      super();
+      this.stop   = stop;
+      this.number = number;
+      this.el     = null;
+    }
+
+    onAdd() {
+      const s  = this.stop;
+      const el = document.createElement('div');
+      el.className = 'square-pin';
+      el.innerHTML = `
+        <div class="square-pin-badge">${this.number}</div>
+        <div class="square-pin-shell">
+          <img class="square-pin-photo" src="${getImg(s.name, s.seed, 'thumb')}" alt="">
+        </div>
+        <div class="square-pin-tip"></div>
+      `;
+      el.style.opacity = '0';
+      el.addEventListener('click', () => {
+        const mapArea = document.querySelector('.map-area');
+        const pinRect = el.getBoundingClientRect();
+        const mapRect = mapArea.getBoundingClientRect();
+        const pinCenterX = pinRect.left - mapRect.left + pinRect.width / 2;
+        const pinTopY    = pinRect.top  - mapRect.top;
+        showPlaceCard(s, pinCenterX, pinTopY);
+      });
+      this.el = el;
+      this.getPanes().overlayMouseTarget.appendChild(el);
+    }
+
+    draw() {
+      if (!this.el) return;
+      const proj = this.getProjection();
+      if (!proj) return;
+      const pt = proj.fromLatLngToDivPixel(
+        new google.maps.LatLng(this.stop.lat, this.stop.lng)
+      );
+      if (!pt) return;
+      this.el.style.left = Math.round(pt.x - 24) + 'px';
+      this.el.style.top  = Math.round(pt.y - 57) + 'px';
+    }
+
+    onRemove() {
+      if (this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
+      this.el = null;
+    }
+
+    fadeIn() {
+      if (!this.el) return;
+      let op = 0;
+      const tick = setInterval(() => {
+        op = Math.min(1, op + 0.1);
+        if (this.el) this.el.style.opacity = op;
+        if (op >= 1) clearInterval(tick);
+      }, 16);
+    }
+  };
+
+  // Hotel pins: 48×48 square photo + price label above (matches Figma node 306:8944)
+  HotelPin = class extends google.maps.OverlayView {
+    constructor(hotel, idx) {
+      super();
+      this.hotel = hotel;
+      this.idx   = idx;
+      this.el    = null;
+    }
+
+    onAdd() {
+      const h  = this.hotel;
+      const el = document.createElement('div');
+      el.className = 'hotel-pin';
+      el.innerHTML = `
+        <div class="hotel-pin-price">${h.price}</div>
+        <div class="hotel-pin-shell">
+          <img class="hotel-pin-photo" src="${getImg(h.name, h.seed, 'thumb')}" alt="">
+        </div>
+        <div class="hotel-pin-tip"></div>
+      `;
+      el.style.opacity = '0';
+      el.draggable = true;
+      el.addEventListener('mousedown', e => e.stopPropagation()); // prevent map pan during drag
+      el.addEventListener('dragstart', e => {
+        draggingHotelIdx = this.idx;
+        e.dataTransfer.effectAllowed = 'copy';
+        e.dataTransfer.setData('text/plain', 'hotel-' + this.idx);
+        setTimeout(() => { if (this.el) this.el.style.opacity = '0.4'; }, 0);
+      });
+      el.addEventListener('dragend', () => {
+        draggingHotelIdx = null;
+        if (this.el) this.el.style.opacity = '1';
+      });
+      el.addEventListener('click', () => showHotelCard(this.idx, el));
+      this.el = el;
+      this.getPanes().overlayMouseTarget.appendChild(el);
+    }
+
+    draw() {
+      if (!this.el) return;
+      const proj = this.getProjection();
+      if (!proj) return;
+      const pt = proj.fromLatLngToDivPixel(
+        new google.maps.LatLng(this.hotel.lat, this.hotel.lng)
+      );
+      if (!pt) return;
+      // Anchor: bottom of shell (where tip is), offset so tip sits on lat/lng point
+      this.el.style.left = Math.round(pt.x - 24) + 'px';
+      this.el.style.top  = Math.round(pt.y - 69) + 'px'; // 21+48 = 69px from top to bottom of shell
+    }
+
+    onRemove() {
+      if (this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
+      this.el = null;
+    }
+
+    fadeIn() {
+      if (!this.el) return;
+      let op = 0;
+      const tick = setInterval(() => {
+        op = Math.min(1, op + 0.12);
+        if (this.el) this.el.style.opacity = op;
+        if (op >= 1) clearInterval(tick);
+      }, 16);
+    }
+  };
+
+  // Small bookmark circle pin shown when a place is saved
+  BookmarkPin = class extends google.maps.OverlayView {
+    constructor(place) {
+      super();
+      this.place = place;
+      this.el    = null;
+    }
+
+    onAdd() {
+      const el = document.createElement('div');
+      el.className = 'bookmark-pin';
+      el.innerHTML = `<span class="material-symbols-rounded">bookmark</span>`;
+      el.addEventListener('click', () => {
+        const place = this.place;
+        if (place.key.startsWith('hotel-')) {
+          const idx = parseInt(place.key.split('-')[1], 10);
+          showHotelCard(idx, el);
+        } else {
+          const mapArea = document.querySelector('.map-area');
+          const pinRect = el.getBoundingClientRect();
+          const mapRect = mapArea.getBoundingClientRect();
+          const pinCenterX = pinRect.left - mapRect.left + pinRect.width / 2;
+          const pinTopY    = pinRect.top  - mapRect.top;
+          showPlaceCard(
+            { id: parseInt(place.key.split('-')[1], 10), name: place.name, seed: place.seed, lat: place.lat, lng: place.lng },
+            pinCenterX, pinTopY
+          );
+        }
+      });
+      this.el = el;
+      this.getPanes().overlayMouseTarget.appendChild(el);
+    }
+
+    draw() {
+      if (!this.el) return;
+      const proj = this.getProjection();
+      if (!proj) return;
+      const pt = proj.fromLatLngToDivPixel(
+        new google.maps.LatLng(this.place.lat, this.place.lng)
+      );
+      if (!pt) return;
+      this.el.style.left = Math.round(pt.x - 10) + 'px';
+      this.el.style.top  = Math.round(pt.y - 10) + 'px';
+    }
+
+    onRemove() {
+      if (this.el && this.el.parentNode) this.el.parentNode.removeChild(this.el);
+      this.el = null;
+    }
+  };
+
   mapReady = true;
+  placesService = new google.maps.places.PlacesService(map);
+  preloadImages();
+
+  if ((appState === 'plan-ai' || appState === 'route') && !animationPending) {
+    renderPins();
+    renderPolyline();
+  }
 }
 
 function zoomIn()  { if (map) map.setZoom(map.getZoom() + 1); }
 function zoomOut() { if (map) map.setZoom(map.getZoom() - 1); }
 
 /* ══════════════════════════════════════════════
-   DRAW ENGINE
-══════════════════════════════════════════════ */
-
-function startExplore() {
-  if (appState === 'draw-mode') { cancelDraw(); return; }
-  if (appState === 'results')   { redrawArea(); return; }
-  enterDrawMode();
-}
-
-function enterDrawMode() {
-  setState('draw-mode');
-  drawMode = true;
-  if (map) map.setOptions({ draggable: false, gestureHandling: 'none' });
-  setupDrawListeners();
-}
-
-function exitDrawMode() {
-  drawMode  = false;
-  isDrawing = false;
-  if (map) map.setOptions({ draggable: true, gestureHandling: 'auto' });
-  removeDrawListeners();
-}
-
-function cancelDraw() {
-  clearStroke();
-  exitDrawMode();
-  setState('idle');
-}
-
-function clearStroke() {
-  if (drawStroke) { drawStroke.setMap(null); drawStroke = null; }
-  drawPoints = [];
-}
-
-function setupDrawListeners() {
-  const overlay = document.getElementById('drawOverlay');
-
-  const onDown = e => {
-    if (!drawMode) return;
-    e.preventDefault();
-    isDrawing  = true;
-    drawPoints = [];
-    clearStroke();
-
-    // Create stroke before latLngFromEvent so onMove can record even if first point conversion fails
-    drawStroke = new google.maps.Polyline({
-      path: [], strokeColor: '#1a73e8',
-      strokeWeight: 2.5, strokeOpacity: 0.7,
-      map, clickable: false, zIndex: 12,
-    });
-
-    const ll = latLngFromEvent(e);
-    if (ll) { drawPoints.push(ll); drawStroke.setPath(drawPoints); }
-  };
-
-  const onMove = e => {
-    if (!drawMode || !isDrawing) return;
-    const ll = latLngFromEvent(e);
-    if (!ll) return;
-    drawPoints.push(ll);
-    if (drawStroke) drawStroke.setPath(drawPoints);
-  };
-
-  const onUp = () => {
-    if (!drawMode || !isDrawing) return;
-    isDrawing = false;
-    commitDraw();
-  };
-
-  overlay.addEventListener('mousedown', onDown);
-  // Attach move/up to document so events aren't lost when cursor leaves overlay mid-drag
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup',   onUp);
-  drawListeners = [
-    { el: overlay,  type: 'mousedown', fn: onDown },
-    { el: document, type: 'mousemove', fn: onMove },
-    { el: document, type: 'mouseup',   fn: onUp   },
-  ];
-}
-
-function removeDrawListeners() {
-  drawListeners.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
-  drawListeners = [];
-}
-
-function commitDraw() {
-  const MIN_POINTS = 3;
-
-  // Remove live stroke polyline but preserve drawPoints for validation + polygon creation
-  if (drawStroke) { drawStroke.setMap(null); drawStroke = null; }
-
-  if (drawPoints.length < MIN_POINTS) {
-    showInvalidDraw();
-    return;
-  }
-
-  exitDrawMode();
-
-  if (drawnShape) drawnShape.setMap(null);
-  drawnShape = new google.maps.Polygon({
-    paths: drawPoints,
-    strokeColor: 'rgba(26,115,232,0.4)', strokeWeight: 1.5, strokeOpacity: 1,
-    fillColor: '#1a73e8', fillOpacity: 0.08,
-    map, clickable: false, zIndex: 6,
-  });
-
-  showResults();
-}
-
-function showInvalidDraw() {
-  let hint = document.getElementById('drawErrorHint');
-  if (!hint) {
-    hint = document.createElement('div');
-    hint.id = 'drawErrorHint';
-    hint.className = 'draw-error-hint';
-    hint.textContent = 'Draw a larger area to search';
-    document.getElementById('stage').appendChild(hint);
-  }
-  hint.classList.add('visible');
-  setTimeout(() => hint.classList.remove('visible'), 2000);
-  isDrawing  = false;
-  drawPoints = [];
-}
-
-/* ══════════════════════════════════════════════
-   RESULTS
-══════════════════════════════════════════════ */
-
-function showResults() {
-  let inArea = PLACES.filter(p => pointInPolygon({ lat: p.lat, lng: p.lng }, drawPoints));
-  if (inArea.length < 3) inArea = PLACES;
-
-  visiblePlaces = inArea;
-  activeChipCat = null;
-  document.querySelectorAll('.chip-pill[data-cat]').forEach(c => c.classList.remove('active'));
-
-  setState('results');
-  renderPins(visiblePlaces);
-  showResultPill(visiblePlaces.length);
-}
-
-/* ══════════════════════════════════════════════
    PIN RENDERING
 ══════════════════════════════════════════════ */
 
-function renderPins(places) {
-  clearAllPins();
-  const shuffled = [...places].sort(() => Math.random() - 0.5);
-  shuffled.forEach((place, i) => {
-    setTimeout(() => addPin(place), 28 * i);
+function renderPins() {
+  clearPins();
+  activeStops.forEach((stop, i) => {
+    setTimeout(() => {
+      const pin = new SquarePin(stop, i + 1);
+      pin.setMap(map);
+      stopMarkers[stop.id] = pin;
+      setTimeout(() => pin.fadeIn(), 20);
+    }, 60 * i);
   });
 }
 
-function addPin(place) {
-  const pin = new PhotoPin(place);
-  pin.setMap(map);
-  placeMarkers[place.id] = pin;
-
-  let op = 0;
-  const fadeIn = setInterval(() => {
-    op = Math.min(1, op + 0.12);
-    pin.setOpacity(op);
-    if (op >= 1) clearInterval(fadeIn);
-  }, 16);
+function clearPins() {
+  Object.values(stopMarkers).forEach(m => m.setMap(null));
+  stopMarkers = {};
 }
 
-function clearAllPins() {
-  Object.values(placeMarkers).forEach(m => m.setMap(null));
-  placeMarkers = {};
+function renderHotelPins() {
+  clearHotelPins();
+  HOTELS.forEach((hotel, i) => {
+    setTimeout(() => {
+      const pin = new HotelPin(hotel, i);
+      pin.setMap(map);
+      hotelMarkers.push(pin);
+      setTimeout(() => pin.fadeIn(), 20);
+    }, 40 * i);
+  });
+  const badge = document.getElementById('showingHotelsBadge');
+  if (badge) badge.style.display = 'flex';
+}
+
+function clearHotelPins() {
+  hotelMarkers.forEach(m => m.setMap(null));
+  hotelMarkers = [];
+}
+
+function dismissHotelPins() {
+  clearHotelPins();
+  const badge = document.getElementById('showingHotelsBadge');
+  if (badge) badge.style.display = 'none';
+  closePlaceCard();
 }
 
 /* ══════════════════════════════════════════════
-   CHIP FILTER (single-select)
+   ROUTE POLYLINE
 ══════════════════════════════════════════════ */
 
-function filterByChip(btn, cat) {
-  if (activeChipCat === cat) {
-    activeChipCat = null;
-    btn.classList.remove('active');
+function renderPolyline() {
+  if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+  if (activeStops.length < 2) return;
+
+  new google.maps.DirectionsService().route({
+    origin:      { lat: activeStops[0].lat,                          lng: activeStops[0].lng },
+    destination: { lat: activeStops[activeStops.length - 1].lat,     lng: activeStops[activeStops.length - 1].lng },
+    waypoints:   activeStops.slice(1, -1).map(s => ({ location: { lat: s.lat, lng: s.lng }, stopover: true })),
+    travelMode:  google.maps.TravelMode.DRIVING,
+    optimizeWaypoints: false,
+  }, (result, status) => {
+    if (status !== 'OK') return;
+    routePolyline = new google.maps.Polyline({
+      path:          result.routes[0].overview_path,
+      strokeColor:   '#1a73e8',
+      strokeWeight:  3,
+      strokeOpacity: 0.9,
+      map,
+      zIndex: 5,
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════
+   STOP LIST (Route tab)
+══════════════════════════════════════════════ */
+
+function renderStopList() {
+  const list = document.getElementById('stopList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  activeStops.forEach((stop, i) => {
+    const isLast = i === activeStops.length - 1;
+    const li = document.createElement('li');
+    li.className = 'stop-item';
+    li.dataset.id = stop.id;
+    li.draggable = true;
+
+    li.innerHTML = `
+      <span class="material-symbols-rounded stop-drag">drag_indicator</span>
+      <div class="stop-dot-wrap">
+        ${isLast
+          ? '<span class="material-symbols-rounded stop-location-icon">location_on</span>'
+          : '<div class="stop-dot"></div>'
+        }
+      </div>
+      <div class="stop-name-pill">${stop.name}</div>
+      <button class="stop-remove-btn" onclick="removeStop(${stop.id})">
+        <span class="material-symbols-rounded">highlight_off</span>
+      </button>
+    `;
+
+    li.addEventListener('dragstart',  stopDragStart);
+    li.addEventListener('dragover',   stopDragOver);
+    li.addEventListener('dragleave',  stopDragLeave);
+    li.addEventListener('drop',       stopDrop);
+    li.addEventListener('dragend',    stopDragEnd);
+
+    list.appendChild(li);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   STOP DRAG-TO-REORDER
+══════════════════════════════════════════════ */
+
+function stopDragStart(e) {
+  dragSrcIndex = [...e.currentTarget.parentNode.children].indexOf(e.currentTarget);
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragSrcIndex);
+  setTimeout(() => e.currentTarget.classList.add('is-dragging'), 0);
+}
+
+function stopDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = draggingHotelIdx !== null ? 'copy' : 'move';
+  clearDropIndicators();
+  const rect = e.currentTarget.getBoundingClientRect();
+  if (e.clientY < rect.top + rect.height / 2) {
+    e.currentTarget.classList.add('drop-above');
   } else {
-    document.querySelectorAll('.chip-pill[data-cat]').forEach(c => c.classList.remove('active'));
-    activeChipCat = cat;
-    btn.classList.add('active');
+    e.currentTarget.classList.add('drop-below');
   }
-  applyChipFilter();
 }
 
-function applyChipFilter() {
-  visiblePlaces.forEach(p => {
-    const m = placeMarkers[p.id];
-    if (!m) return;
-    const show = !activeChipCat || p.cat === activeChipCat;
-    m.setOpacity(show ? 1 : 0.12);
-    m.setZIndex(show ? 10 : 4);
+function stopDragLeave(e) {
+  e.currentTarget.classList.remove('drop-above', 'drop-below');
+}
+
+function stopDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  let dropIndex = [...target.parentNode.children].indexOf(target);
+
+  const rect = target.getBoundingClientRect();
+  if (e.clientY >= rect.top + rect.height / 2) dropIndex += 1;
+
+  clearDropIndicators();
+
+  // Hotel pin dropped into stop list
+  if (draggingHotelIdx !== null) {
+    const h = HOTELS[draggingHotelIdx];
+    const newStop = {
+      id:   2000 + draggingHotelIdx,
+      name: h.name,
+      lat:  h.lat,
+      lng:  h.lng,
+      seed: h.seed,
+    };
+    activeStops.splice(dropIndex, 0, newStop);
+
+    // Remove the hotel price pin (replaced by numbered route stop pin)
+    const hm = hotelMarkers[draggingHotelIdx];
+    if (hm) hm.setMap(null);
+
+    draggingHotelIdx = null;
+    renderStopList();
+    if (mapReady) { renderPins(); renderPolyline(); }
+    showTab('route');
+    return;
+  }
+
+  // Stop-to-stop reorder
+  if (dragSrcIndex === null || dragSrcIndex === dropIndex) return;
+
+  const insertAt = dropIndex > dragSrcIndex ? dropIndex - 1 : dropIndex;
+  const [moved]  = activeStops.splice(dragSrcIndex, 1);
+  activeStops.splice(insertAt, 0, moved);
+
+  renderStopList();
+  if (mapReady) { renderPins(); renderPolyline(); }
+}
+
+function stopDragEnd(e) {
+  e.currentTarget.classList.remove('is-dragging');
+  clearDropIndicators();
+  dragSrcIndex = null;
+}
+
+function clearDropIndicators() {
+  document.querySelectorAll('.stop-item').forEach(el =>
+    el.classList.remove('drop-above', 'drop-below')
+  );
+}
+
+function removeStop(id) {
+  activeStops = activeStops.filter(s => s.id !== id);
+
+  if (stopMarkers[id]) {
+    stopMarkers[id].setMap(null);
+    delete stopMarkers[id];
+  }
+
+  renderStopList();
+
+  if (mapReady && routePolyline) {
+    renderPolyline();
+  }
+}
+
+/* ══════════════════════════════════════════════
+   PLACE CARD
+══════════════════════════════════════════════ */
+
+function showPlaceCard(stop, pinCenterX, pinTopY) {
+  const card    = document.getElementById('placeCard');
+  const mapArea = document.querySelector('.map-area');
+  const mapW    = mapArea.offsetWidth;
+  const mapH    = mapArea.offsetHeight;
+  const cardW   = 320;
+  const cardH   = 248;
+  const gap     = 12;
+
+  let left = pinCenterX - cardW / 2;
+  let top  = pinTopY - cardH - gap;
+
+  if (top < 8) top = pinTopY + 62 + gap;
+
+  left = Math.max(8, Math.min(left, mapW - cardW - 8));
+  top  = Math.max(8, Math.min(top,  mapH - cardH - 8));
+
+  card.style.left = left + 'px';
+  card.style.top  = top  + 'px';
+
+  document.getElementById('placeCardImg').src = getImg(stop.name, stop.seed);
+  document.getElementById('placeCardName').textContent = stop.name;
+
+  currentCardData = { key: `stop-${stop.id}`, name: stop.name, seed: stop.seed, stars: 4.7, lat: stop.lat, lng: stop.lng };
+  updateBookmarkBtn();
+  card.classList.add('is-visible');
+}
+
+function closePlaceCard() {
+  document.getElementById('placeCard').classList.remove('is-visible');
+  hotelMarkers.forEach(m => { if (m.el) m.el.classList.remove('hotel-pin--active'); });
+}
+
+function updateBookmarkBtn() {
+  const icon = document.getElementById('placeCardBookmarkIcon');
+  if (!icon || !currentCardData) return;
+  const saved = !!savedPlaces[currentCardData.key];
+  icon.textContent = saved ? 'bookmark' : 'bookmark_border';
+  icon.style.color = saved ? '#1a73e8' : '';
+}
+
+function toggleSave() {
+  if (!currentCardData) return;
+  const key = currentCardData.key;
+  if (savedPlaces[key]) {
+    unsavePlace(key);
+  } else {
+    savedPlaces[key] = { ...currentCardData };
+    if (mapReady && currentCardData.lat) {
+      const pin = new BookmarkPin(currentCardData);
+      pin.setMap(map);
+      savedPinMarkers[key] = pin;
+    }
+    renderSavedList();
+    updateBookmarkBtn();
+  }
+}
+
+function unsavePlace(key) {
+  delete savedPlaces[key];
+  if (savedPinMarkers[key]) {
+    savedPinMarkers[key].setMap(null);
+    delete savedPinMarkers[key];
+  }
+  renderSavedList();
+  updateBookmarkBtn();
+}
+
+function renderSavedList() {
+  const section = document.getElementById('savedSection');
+  const list    = document.getElementById('savedList');
+  if (!section || !list) return;
+
+  const items = Object.values(savedPlaces);
+  section.style.display = items.length ? 'block' : 'none';
+
+  list.innerHTML = items.map(p => `
+    <li class="saved-item">
+      <div class="saved-thumb-wrap">
+        <img class="saved-thumb" src="${getImg(p.name, p.seed, 'micro')}" alt="">
+      </div>
+      <div class="saved-info">
+        <div class="saved-name">${p.name}</div>
+        <div class="saved-meta">
+          ${p.price ? `<span>${p.price}</span><span class="saved-sep">|</span>` : ''}
+          <span>${p.stars}</span>
+          <span class="material-symbols-rounded saved-star">star</span>
+          <span class="saved-sep">·</span>
+          <span>123 reviews</span>
+        </div>
+      </div>
+      <button class="saved-remove-btn" onclick="unsavePlace('${p.key}')">
+        <span class="material-symbols-rounded">highlight_off</span>
+      </button>
+    </li>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════════
+   SEARCH / FIND HOTELS
+══════════════════════════════════════════════ */
+
+function prefillFooterInput(text) {
+  const input = document.querySelector('.footer-input');
+  if (!input || input.disabled) return;
+  input.value = '';
+  let i = 0;
+  const tick = () => {
+    if (i < text.length) {
+      input.value += text[i++];
+      setTimeout(tick, 35);
+    }
+  };
+  tick();
+}
+
+function submitSearch() {
+  const input = document.querySelector('.footer-input');
+  const query = input ? input.value.trim() : '';
+  if (!query || searchState === 'loading') return;
+
+  searchState = 'loading';
+  if (input) { input.value = ''; input.disabled = true; input.placeholder = ''; }
+
+  document.getElementById('searchSkeleton').classList.add('is-visible');
+  setTimeout(showSearchResults, 2200);
+}
+
+function showSearchResults() {
+  searchState = 'results';
+  document.getElementById('searchSkeleton').classList.remove('is-visible');
+
+  renderHotelCards();
+  const section = document.getElementById('searchResultsSection');
+  section.classList.add('is-visible');
+
+  if (mapReady) renderHotelPins();
+
+  const input = document.querySelector('.footer-input');
+  if (input) { input.disabled = false; input.placeholder = 'Tell me more...'; }
+
+  // Scroll the panel so results are visible
+  const panelContent = document.querySelector('.panel-content');
+  if (panelContent) {
+    setTimeout(() => { panelContent.scrollTop = panelContent.scrollHeight; }, 80);
+  }
+}
+
+function hotelCardHTML(h, i) {
+  return `
+    <div class="hotel-card" onclick="showHotelCard(${i})">
+      <div class="hotel-thumb-wrap">
+        <img class="hotel-thumb" src="${getImg(h.name, h.seed, 'micro')}" alt="">
+      </div>
+      <div class="hotel-info">
+        <div class="hotel-name">${h.name}</div>
+        <div class="hotel-rating-row">
+          <span class="hotel-rating-score">${h.stars}</span>
+          <span class="material-symbols-rounded hotel-star">star</span>
+          <span class="hotel-rating-dot">·</span>
+          <span class="hotel-rating-count">123 reviews</span>
+        </div>
+      </div>
+      <div class="hotel-price-pill">${h.price}</div>
+    </div>
+  `;
+}
+
+function renderHotelCards() {
+  const list = document.getElementById('searchResultsList');
+  if (!list) return;
+  const visible = HOTELS.slice(0, 3);
+  const hidden  = HOTELS.slice(3);
+  list.innerHTML =
+    visible.map((h, i) => hotelCardHTML(h, i)).join('') +
+    (hidden.length ? `
+      <div id="hotelExpandRow" class="hotel-expand-row">
+        <button class="hotel-expand-btn" onclick="expandHotels()">
+          See all ${HOTELS.length} hotels
+          <span class="material-symbols-rounded">expand_more</span>
+        </button>
+      </div>
+    ` : '');
+}
+
+function expandHotels() {
+  const list = document.getElementById('searchResultsList');
+  const expandRow = document.getElementById('hotelExpandRow');
+  if (!list || !expandRow) return;
+  const extraHTML = HOTELS.slice(3).map((h, i) => hotelCardHTML(h, i + 3)).join('');
+  expandRow.insertAdjacentHTML('beforebegin', extraHTML);
+  expandRow.remove();
+}
+
+function showHotelCard(idx, el) {
+  const h       = HOTELS[idx];
+  const card    = document.getElementById('placeCard');
+  const mapArea = document.querySelector('.map-area');
+  const mapW    = mapArea.offsetWidth;
+  const mapH    = mapArea.offsetHeight;
+  const cardW   = 320;
+  const cardH   = 248;
+  const gap     = 12;
+
+  hotelMarkers.forEach((m, i) => {
+    if (m.el) m.el.classList.toggle('hotel-pin--active', i === idx);
   });
 
-  const count = activeChipCat
-    ? visiblePlaces.filter(p => p.cat === activeChipCat).length
-    : visiblePlaces.length;
-  showResultPill(count);
+  let left, top;
+
+  if (el) {
+    // Clicked from map pin: position card above (or below) the pin, same as route stop cards
+    const pinRect = el.getBoundingClientRect();
+    const mapRect = mapArea.getBoundingClientRect();
+    const pinCenterX = pinRect.left - mapRect.left + pinRect.width / 2;
+    const pinTopY    = pinRect.top  - mapRect.top;
+
+    left = pinCenterX - cardW / 2;
+    top  = pinTopY - cardH - gap;
+    if (top < 8) top = pinTopY + pinRect.height + gap;
+  } else {
+    // Clicked from panel list: pan map to hotel, place card at top-right to avoid center overlap
+    if (map) map.panTo({ lat: h.lat, lng: h.lng });
+    left = mapW - cardW - 16;
+    top  = 72;
+  }
+
+  left = Math.max(8, Math.min(left, mapW - cardW - 8));
+  top  = Math.max(8, Math.min(top,  mapH - cardH - 8));
+
+  card.style.left = left + 'px';
+  card.style.top  = top  + 'px';
+  document.getElementById('placeCardImg').src = getImg(h.name, h.seed);
+  document.getElementById('placeCardName').textContent = h.name;
+
+  currentCardData = { key: `hotel-${idx}`, name: h.name, seed: h.seed, price: h.price, stars: h.stars, lat: h.lat, lng: h.lng };
+  updateBookmarkBtn();
+  card.classList.add('is-visible');
 }
 
 /* ══════════════════════════════════════════════
-   SEARCH
+   VEHICLE SELECTOR
 ══════════════════════════════════════════════ */
 
-function openSearch() {
-  document.getElementById('searchBar').classList.add('open');
-  // Hide chip bar using inline style so it overrides the results-state CSS
-  const chipBar = document.getElementById('chipBar');
-  chipBar.style.opacity = '0';
-  chipBar.style.pointerEvents = 'none';
-  document.getElementById('searchInput').focus();
+function toggleVehicleDropdown(e) {
+  e.stopPropagation();
+  const dropdown = document.getElementById('vehicleDropdown');
+  const chevron  = document.getElementById('vehicleChipChevron');
+  const isOpen   = dropdown.classList.toggle('is-open');
+  chevron.textContent = isOpen ? 'expand_less' : 'expand_more';
 }
 
-function closeSearch() {
-  document.getElementById('searchBar').classList.remove('open');
-  document.getElementById('searchInput').value = '';
-  // Restore chip bar
-  const chipBar = document.getElementById('chipBar');
-  chipBar.style.opacity = '';
-  chipBar.style.pointerEvents = '';
-  applyChipFilter();
+function selectVehicle(optionEl, name, icon) {
+  document.getElementById('vehicleChipLabel').textContent = name;
+  document.getElementById('vehicleChipIcon').textContent  = icon;
+  document.querySelectorAll('.vehicle-radio').forEach(r =>
+    r.classList.remove('vehicle-radio--selected')
+  );
+  optionEl.querySelector('.vehicle-radio').classList.add('vehicle-radio--selected');
+  document.getElementById('vehicleDropdown').classList.remove('is-open');
+  document.getElementById('vehicleChipChevron').textContent = 'expand_more';
 }
 
-function onSearchInput() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  filterBySearch(q);
-}
-
-function onSearchKey(e) {
-  if (e.key === 'Enter')  doSearch();
-  if (e.key === 'Escape') closeSearch();
-}
-
-function doSearch() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  filterBySearch(q);
-}
-
-function filterBySearch(q) {
-  visiblePlaces.forEach(p => {
-    const m = placeMarkers[p.id];
-    if (!m) return;
-    const match = !q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q);
-    m.setOpacity(match ? 1 : 0.1);
-    m.setZIndex(match ? 10 : 4);
-  });
-
-  const count = q
-    ? visiblePlaces.filter(p => p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)).length
-    : visiblePlaces.length;
-  showResultPill(count);
-}
-
-/* ══════════════════════════════════════════════
-   RESULT PILL
-══════════════════════════════════════════════ */
-
-function showResultPill(count) {
-  const pill = document.getElementById('resultPill');
-  pill.textContent = count + ' place' + (count !== 1 ? 's' : '');
-  pill.classList.add('visible');
-}
-
-function hideResultPill() {
-  document.getElementById('resultPill').classList.remove('visible');
-}
-
-/* ══════════════════════════════════════════════
-   REDRAW
-══════════════════════════════════════════════ */
-
-function redrawArea() {
-  if (drawnShape) { drawnShape.setMap(null); drawnShape = null; }
-  clearAllPins();
-  visiblePlaces = [];
-  activeChipCat = null;
-  if (document.getElementById('searchBar').classList.contains('open')) closeSearch();
-  hideResultPill();
-  enterDrawMode();
-}
-
-/* ══════════════════════════════════════════════
-   KEYBOARD
-══════════════════════════════════════════════ */
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (appState === 'draw-mode') cancelDraw();
-    else if (document.getElementById('searchBar').classList.contains('open')) closeSearch();
+document.addEventListener('click', () => {
+  const dropdown = document.getElementById('vehicleDropdown');
+  if (dropdown && dropdown.classList.contains('is-open')) {
+    dropdown.classList.remove('is-open');
+    document.getElementById('vehicleChipChevron').textContent = 'expand_more';
   }
 });
