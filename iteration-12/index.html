@@ -215,13 +215,37 @@
       <div class="map-area">
         <div id="map"></div>
 
-        <!-- Centered Prompt Bar -->
-        <div class="map-prompt-bar" id="mapPromptBar">
-          <span class="material-symbols-rounded map-prompt-icon">auto_awesome</span>
-          <input type="text" class="map-prompt-input" id="mapPromptInput" placeholder="Ask about your trip...">
-          <button class="map-prompt-send" onclick="submitSearch()">
-            <span class="material-symbols-rounded">arrow_forward</span>
-          </button>
+        <!-- Prompt Bar — bottom center, 4 states -->
+        <div class="map-prompt-bar" id="mapPromptBar" data-prompt-state="default">
+
+          <!-- Default / Typed state -->
+          <div class="prompt-bar-input-wrap" id="promptBarInputWrap">
+            <textarea class="map-prompt-input" id="mapPromptInput" placeholder="Find hotels on my route" rows="1"></textarea>
+            <div class="prompt-bar-footer-row">
+              <span class="prompt-bar-model">Gemini Pro 3.1</span>
+              <button class="prompt-bar-send" id="promptBarSend" onclick="submitSearch()">
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Running state -->
+          <div class="prompt-bar-running-wrap" id="promptBarRunningWrap">
+            <span class="prompt-bar-running-text" id="promptBarRunningText">Finding hotels for you...</span>
+            <div class="prompt-bar-running-right">
+              <span class="prompt-bar-model">Gemini Pro 3.1</span>
+              <button class="prompt-bar-stop-btn" onclick="cancelSearch()">
+                <span class="material-symbols-rounded">stop</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Done state -->
+          <div class="prompt-bar-done-wrap" id="promptBarDoneWrap">
+            <span class="material-symbols-rounded prompt-bar-done-icon">check_circle</span>
+            <span class="prompt-bar-done-text">Done</span>
+          </div>
+
         </div>
 
         <!-- Showing hotels badge (visible while hotel pins are on map) -->

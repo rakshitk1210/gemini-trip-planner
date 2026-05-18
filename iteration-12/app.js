@@ -152,9 +152,6 @@ function goToMap() {
     // ── 4. Render map immediately ──
     setTimeout(renderMapAfterAI, 180);
 
-    // ── 5. Pre-fill prompt bar with hotel search query ──
-    setTimeout(() => prefillPromptInput('Show me hotels along my route'), 1400);
-
   }, 240);
 }
 
@@ -244,7 +241,8 @@ function initMap() {
         <div class="square-pin-tip"></div>
       `;
       el.style.opacity = '0';
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
         const mapArea = document.querySelector('.map-area');
         const pinRect = el.getBoundingClientRect();
         const mapRect = mapArea.getBoundingClientRect();
@@ -317,7 +315,7 @@ function initMap() {
         draggingHotelIdx = null;
         if (this.el) this.el.style.opacity = '1';
       });
-      el.addEventListener('click', () => showHotelCard(this.idx, el));
+      el.addEventListener('click', (e) => { e.stopPropagation(); showHotelCard(this.idx, el); });
       this.el = el;
       this.getPanes().overlayMouseTarget.appendChild(el);
     }
@@ -363,7 +361,8 @@ function initMap() {
       const el = document.createElement('div');
       el.className = 'bookmark-pin';
       el.innerHTML = `<span class="material-symbols-rounded">bookmark</span>`;
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
         const place = this.place;
         if (place.key.startsWith('hotel-')) {
           const idx = parseInt(place.key.split('-')[1], 10);
@@ -405,6 +404,10 @@ function initMap() {
   mapReady = true;
   placesService = new google.maps.places.PlacesService(map);
   preloadImages();
+
+  google.maps.event.addListener(map, 'click',        closePlaceCard);
+  google.maps.event.addListener(map, 'dragstart',    closePlaceCard);
+  google.maps.event.addListener(map, 'zoom_changed', closePlaceCard);
 
   if (appState === 'route' && !animationPending) {
     renderPins();
@@ -746,16 +749,32 @@ function prefillPromptInput(text) {
   tick();
 }
 
+function setPromptState(state) {
+  const bar = document.getElementById('mapPromptBar');
+  if (bar) bar.dataset.promptState = state;
+}
+
 function submitSearch() {
   const input = document.getElementById('mapPromptInput');
   const query = input ? input.value.trim() : '';
   if (!query || searchState === 'loading') return;
 
   searchState = 'loading';
-  if (input) { input.value = ''; input.disabled = true; input.placeholder = 'Finding hotels...'; }
+
+  const runningText = document.getElementById('promptBarRunningText');
+  if (runningText) runningText.textContent = query.toLowerCase().includes('hotel') ? 'Finding hotels for you...' : 'Searching for you...';
+
+  if (input) { input.value = ''; input.style.height = ''; }
+  setPromptState('running');
 
   document.getElementById('searchSkeleton').classList.add('is-visible');
   setTimeout(showSearchResults, 2200);
+}
+
+function cancelSearch() {
+  searchState = null;
+  document.getElementById('searchSkeleton').classList.remove('is-visible');
+  setPromptState('default');
 }
 
 function showSearchResults() {
@@ -769,9 +788,11 @@ function showSearchResults() {
   if (mapReady) renderHotelPins();
 
   const input = document.getElementById('mapPromptInput');
-  if (input) { input.disabled = false; input.placeholder = 'Ask about your trip...'; }
+  if (input) { input.disabled = false; input.placeholder = 'Find hotels on my route'; }
 
-  // Scroll the panel so results are visible
+  setPromptState('done');
+  setTimeout(() => { setPromptState('default'); }, 2000);
+
   const panelContent = document.querySelector('.panel-content');
   if (panelContent) {
     setTimeout(() => { panelContent.scrollTop = panelContent.scrollHeight; }, 80);
@@ -905,7 +926,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const promptInput = document.getElementById('mapPromptInput');
   if (promptInput) {
     promptInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') submitSearch();
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitSearch(); }
+    });
+
+    promptInput.addEventListener('input', () => {
+      const bar = document.getElementById('mapPromptBar');
+      if (!bar) return;
+      const hasText = promptInput.value.trim().length > 0;
+      if (bar.dataset.promptState === 'default' || bar.dataset.promptState === 'typed') {
+        bar.dataset.promptState = hasText ? 'typed' : 'default';
+      }
+      // Auto-resize textarea
+      promptInput.style.height = 'auto';
+      promptInput.style.height = promptInput.scrollHeight + 'px';
     });
   }
 });

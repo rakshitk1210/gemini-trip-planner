@@ -445,20 +445,20 @@ body[data-state="route"] .map-view {
 }
 .tab-pane--hidden { display: none; }
 
-/* Route pane */
+/* Route pane — stop list (pill style) */
 .stop-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 4px 0;
+  gap: 14px;
+  padding: 8px 0 4px;
 }
 
 .stop-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0;
+  padding: 0 16px;
   position: relative;
   transition: opacity 0.15s;
 }
@@ -473,27 +473,14 @@ body[data-state="route"] .map-view {
   flex-shrink: 0;
 }
 
+/* Small dot indicator between drag icon and pill */
 .stop-dot-wrap {
   width: 12px;
+  height: 12px;
   flex-shrink: 0;
-  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-}
-
-/* Vertical line connecting each dot to the next */
-.stop-item:not(:last-child) .stop-dot-wrap::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 1.5px;
-  height: calc(100% + 16px); /* extends through gap to center of next dot */
-  background: #dadce0;
-  z-index: 0;
 }
 
 .stop-dot {
@@ -501,29 +488,26 @@ body[data-state="route"] .map-view {
   border-radius: 50%;
   border: 2px solid #9aa0a6;
   background: white;
-  position: relative;
-  z-index: 1;
 }
 
 .stop-location-icon {
   font-size: 18px;
   color: #EA4335;
   font-variation-settings: 'FILL' 1;
-  position: relative;
-  z-index: 1;
 }
 
 .stop-name-pill {
   flex: 1;
   border: 1px solid #202124;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
   color: #5f6368;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 16px;
 }
 
 .stop-remove-btn {
@@ -647,59 +631,141 @@ body[data-state="route"] .map-view {
   gap: 12px;
 }
 
-/* ── Centered Prompt Bar ── */
+/* ── Prompt Bar (bottom-center, 4 states) ── */
 .map-prompt-bar {
   position: absolute;
-  top: 16px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(480px, calc(100% - 32px));
-  height: 48px;
+  width: 400px;
+  max-width: calc(100% - 32px);
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-  display: flex;
-  align-items: center;
-  padding: 0 8px 0 16px;
-  gap: 8px;
+  border: 1px solid #1a73e8;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  padding: 12px 12px 8px;
   z-index: 10;
+  transition: border-color 0.15s;
 }
 
-.map-prompt-icon {
-  font-size: 18px;
-  color: #1a73e8;
-  flex-shrink: 0;
-  font-variation-settings: 'FILL' 1;
-}
+/* State visibility */
+.prompt-bar-input-wrap,
+.prompt-bar-running-wrap,
+.prompt-bar-done-wrap { display: none; }
 
+.map-prompt-bar[data-prompt-state="default"] .prompt-bar-input-wrap,
+.map-prompt-bar[data-prompt-state="typed"]   .prompt-bar-input-wrap { display: block; }
+
+.map-prompt-bar[data-prompt-state="running"] .prompt-bar-running-wrap { display: flex; }
+.map-prompt-bar[data-prompt-state="done"]    .prompt-bar-done-wrap    { display: flex; }
+
+/* Input area */
 .map-prompt-input {
-  flex: 1;
+  width: 100%;
   border: none;
   outline: none;
+  resize: none;
   font-family: 'Google Sans', Arial, sans-serif;
   font-size: 14px;
+  line-height: 20px;
   color: #202124;
   background: transparent;
-  min-width: 0;
+  min-height: 20px;
+  max-height: 80px;
+  overflow-y: auto;
+  display: block;
 }
 .map-prompt-input::placeholder { color: #9aa0a6; }
 
-.map-prompt-send {
-  width: 36px; height: 36px;
-  background: #1a73e8;
-  border: none; border-radius: 50%;
-  color: white; cursor: pointer;
+/* Bottom row: model label + send btn */
+.prompt-bar-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.prompt-bar-model {
+  font-size: 12px;
+  color: #5f6368;
+  line-height: 16px;
+}
+
+/* Send button — inactive when empty, active when typed */
+.prompt-bar-send {
+  width: 24px; height: 24px;
+  border: none; border-radius: 12px;
+  background: rgba(26,115,232,0.12);
+  color: #1a73e8;
+  cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   transition: background 0.15s;
 }
-.map-prompt-send:hover { background: #1765cc; }
-.map-prompt-send .material-symbols-rounded { font-size: 18px; }
+.prompt-bar-send .material-symbols-rounded { font-size: 16px; }
+
+.map-prompt-bar[data-prompt-state="typed"] .prompt-bar-send {
+  background: #1a73e8;
+  color: white;
+}
+.prompt-bar-send:hover { opacity: 0.85; }
+
+/* Running state */
+.prompt-bar-running-wrap {
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.prompt-bar-running-text {
+  flex: 1;
+  font-size: 14px;
+  color: #202124;
+  line-height: 20px;
+}
+
+.prompt-bar-running-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.prompt-bar-stop-btn {
+  width: 24px; height: 24px;
+  border: none; border-radius: 12px;
+  background: #1a73e8;
+  color: white;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.prompt-bar-stop-btn:hover { background: #1765cc; }
+.prompt-bar-stop-btn .material-symbols-rounded { font-size: 14px; font-variation-settings: 'FILL' 1; }
+
+/* Done state */
+.prompt-bar-done-wrap {
+  align-items: center;
+  gap: 8px;
+}
+
+.prompt-bar-done-icon {
+  font-size: 16px;
+  color: #188038;
+  font-variation-settings: 'FILL' 1;
+}
+
+.prompt-bar-done-text {
+  font-size: 14px;
+  color: #202124;
+  line-height: 20px;
+}
 
 /* Showing hotels badge */
 .showing-hotels-badge {
   position: absolute;
-  top: 76px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
