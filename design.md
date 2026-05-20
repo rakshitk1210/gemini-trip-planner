@@ -31,6 +31,7 @@ Primitives are the palette source of truth. Components **must not** reference pr
 
 | Token | Value |
 |---|---|
+| `palette.teal.50` | `#F4FBFC` |
 | `palette.blue.50` | `#e8f0fe` |
 | `palette.blue.500` | `#1a73e8` |
 | `palette.blue.600` | `#1967d2` |
@@ -84,6 +85,7 @@ Components **must** consume only semantic tokens.
 | `color.action.primaryDisabled` | `palette.neutral.200` | `palette.neutral.700` |
 | `color.action.stateLayerHover` | `rgba(26,115,232,0.08)` | `rgba(138,180,248,0.08)` |
 | `color.action.stateLayerPressed` | `rgba(26,115,232,0.12)` | `rgba(138,180,248,0.12)` |
+| `color.action.suggestionAdd` | `palette.teal.50` (`#F4FBFC`) | `palette.teal.50` | Resting background for suggestion "add to route" icon button |
 
 **Border**
 | Token | Light | Dark |
