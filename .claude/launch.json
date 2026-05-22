@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "iteration-14",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3014", "iteration-14"],
+      "port": 3014
+    },
+    {
+      "name": "iteration-15",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3015", "--directory", "iteration-15"],
+      "port": 3015
+    },
+    {
+      "name": "iteration-16",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["iteration-16/serve.py"],
+      "port": 3016
+    }
+  ]
+}
