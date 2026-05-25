@@ -68,7 +68,6 @@ export default function HomeScreen() {
         </div>
 
       </div>
-      <p className="home-disclaimer">Gemini can make mistakes</p>
     </div>
   );
 }
