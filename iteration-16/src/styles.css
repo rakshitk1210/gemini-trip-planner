@@ -248,7 +248,7 @@ body[data-state="home"] .home-screen {
   gap: 8px;
 }
 
-.prompt-body { padding: 16px; }
+.prompt-body { padding: 16px; flex: 1; }
 
 .prompt-text {
   font-size: 18px;
@@ -256,6 +256,7 @@ body[data-state="home"] .home-screen {
   color: #202124;
   line-height: 26px;
   outline: none;
+  min-height: 52px;
 }
 
 .prompt-actions {
