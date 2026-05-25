@@ -2,11 +2,12 @@ import React from 'react';
 import PromptCard from './PromptCard.jsx';
 import useAppStore from '../store/useAppStore.js';
 
+const BASE = import.meta.env.BASE_URL;
 const TRIPS = [
-  { id: 'iceland',    name: 'Ring Road, Iceland',         meta: '12-hour drive • 800 miles', img: '/trip-iceland.jpg'    },
-  { id: 'amalfi',    name: 'Amalfi Coast, Italy',         meta: '3-hour drive • 90 miles',   img: '/trip-amalfi.jpg'    },
-  { id: 'garden',    name: 'Garden Route, South Africa',  meta: '5-hour drive • 200 miles',  img: '/trip-garden.jpg'    },
-  { id: 'oceanroad', name: 'Great Ocean Road, Australia', meta: '8-hour drive • 450 miles',  img: '/trip-oceanroad.jpg' },
+  { id: 'iceland',    name: 'Ring Road, Iceland',         meta: '12-hour drive • 800 miles', img: `${BASE}trip-iceland.jpg`    },
+  { id: 'amalfi',    name: 'Amalfi Coast, Italy',         meta: '3-hour drive • 90 miles',   img: `${BASE}trip-amalfi.jpg`    },
+  { id: 'garden',    name: 'Garden Route, South Africa',  meta: '5-hour drive • 200 miles',  img: `${BASE}trip-garden.jpg`    },
+  { id: 'oceanroad', name: 'Great Ocean Road, Australia', meta: '8-hour drive • 450 miles',  img: `${BASE}trip-oceanroad.jpg` },
 ];
 
 export default function HomeScreen() {
@@ -19,7 +20,7 @@ export default function HomeScreen() {
         {/* User greeting + prompt card */}
         <div className="home-hero">
           <div className="home-greeting">
-            <img src="/user-avatar.svg" alt="User avatar" className="home-avatar-img" />
+            <img src={`${BASE}user-avatar.svg`} alt="User avatar" className="home-avatar-img" />
             <div className="home-heading-wrap">
               <h1 className="home-heading">Hi Rakshit. Where are you headed?</h1>
             </div>
