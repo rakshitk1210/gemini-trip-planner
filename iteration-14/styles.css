@@ -516,7 +516,148 @@ body[data-state="route"] .map-view {
 }
 .tab-pane--hidden { display: none; }
 
-/* ── AI Bubble ── */
+/* ── Chat pane overrides (no padding — turns manage their own) ── */
+#paneplanai {
+  padding: 0;
+  gap: 0;
+}
+
+/* ══════════════════════════════════════════
+   CHAT THREAD
+══════════════════════════════════════════ */
+
+/* Each conversational exchange */
+.chat-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 10px;
+}
+/* Separate turns with a very subtle border */
+.chat-turn + .chat-turn {
+  border-top: 1px solid #f1f3f4;
+}
+
+/* User bubble — right-aligned */
+.chat-bubble--user {
+  align-self: flex-end;
+  max-width: 82%;
+  background: #1a73e8;
+  color: #fff;
+  border-radius: 20px 20px 4px 20px;
+  padding: 10px 14px;
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  word-break: break-word;
+}
+
+/* AI bubble row (icon + bubble) */
+.chat-bubble-ai-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Gemini icon next to AI bubble */
+.chat-gemini-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* AI response bubble — left-aligned */
+.chat-bubble--ai {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e8eaed;
+  border-radius: 4px 20px 20px 20px;
+  padding: 10px 14px;
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #202124;
+  min-height: 42px;
+}
+
+/* Thinking animation inside AI bubble */
+.chat-thinking {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+}
+.chat-thinking span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1a73e8;
+  display: inline-block;
+  animation: dotBounce 1.2s infinite ease-in-out;
+}
+.chat-thinking span:nth-child(2) { animation-delay: 0.2s; }
+.chat-thinking span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Quick-reply chips row (indented past icon) */
+.chat-chips {
+  display: flex;
+  gap: 6px;
+  padding-left: 28px;
+  flex-wrap: wrap;
+}
+.chat-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  height: 30px;
+  border-radius: 100px;
+  border: 1px solid #dadce0;
+  background: #fff;
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #202124;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.chat-chip:hover:not(:disabled) { background: #f8f9fa; border-color: #bdc1c6; }
+.chat-chip:disabled { opacity: 0.45; cursor: default; }
+.chat-chip .material-symbols-rounded { font-size: 13px !important; }
+
+/* Card list inside a chat turn (bleeds to panel edges) */
+.chat-card-list {
+  display: flex;
+  flex-direction: column;
+  margin: 6px -16px 0;
+  border-top: 1px solid #e8eaed;
+}
+/* Suggestion cards inherit all their existing styles */
+
+/* "Show X more" expand button at bottom of card list */
+.chat-show-more {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 11px 16px;
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a73e8;
+  background: #fff;
+  border: none;
+  border-top: 1px solid #e8eaed;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.chat-show-more:hover { background: #f8f9fa; }
+.chat-show-more .material-symbols-rounded { font-size: 18px !important; color: #1a73e8; }
+
+/* ── AI Bubble (legacy, kept for safety) ── */
 .ai-bubble-wrap {
   display: flex;
   justify-content: flex-end;
@@ -1502,30 +1643,35 @@ body.draw-mode .circle-overlay { pointer-events: all; }
   stroke-width: 2;
   stroke-dasharray: 10 6;
   display: none;
-  transition: r 0.05s;
 }
 
-/* Floating distance label */
-.circle-label {
-  position: absolute;
+/* Radius line from center to edge */
+.svg-radius-line {
+  stroke: #1a73e8;
+  stroke-width: 1.5;
   display: none;
-  align-items: center;
-  gap: 4px;
-  background: white;
-  border: 1px solid #e8eaed;
-  border-radius: 100px;
-  padding: 4px 10px;
-  font-family: 'Google Sans', Arial, sans-serif;
-  font-size: 12px;
-  color: #202124;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 9;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  transform: translate(-50%, -50%);
 }
-.circle-label.is-visible { display: flex; }
-.circle-label .material-symbols-rounded { font-size: 14px !important; color: #5f6368; }
+
+/* Draggable handle dots */
+.svg-handle-dot {
+  fill: #1a73e8;
+  stroke: white;
+  stroke-width: 2.5;
+  display: none;
+  cursor: move;
+  pointer-events: all;
+}
+
+/* Curved distance label along top arc */
+.svg-arc-label {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 11px;
+  fill: #1a73e8;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  display: none;
+  pointer-events: none;
+}
 
 /* Remove circle button */
 .circle-remove-btn {

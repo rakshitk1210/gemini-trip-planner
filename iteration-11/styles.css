@@ -122,7 +122,7 @@ body {
 .home-screen {
   display: none;
   height: 100%;
-  background: #f8f9fa;
+  background: white;
   overflow-y: auto;
   position: relative;
 }
@@ -133,11 +133,12 @@ body[data-state="home"] .home-screen {
 }
 
 .home-content {
-  width: 600px;
+  width: 720px;
   max-width: calc(100% - 48px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 56px;
+  padding-top: 100px;
   padding-bottom: 64px;
 }
 
@@ -146,9 +147,7 @@ body[data-state="home"] .home-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 46px;
-  padding: 120px 0 60px;
-  border-bottom: 1px solid #e8eaed;
+  gap: 32px;
 }
 
 .hero-heading-group {
@@ -160,47 +159,48 @@ body[data-state="home"] .home-screen {
 }
 
 .gemini-logo-wrap {
-  width: 48px; height: 48px;
-  background: white;
-  border-radius: 135px;
+  width: 64px; height: 64px;
+  background: #f8f9fa;
+  border-radius: 24px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 3px rgba(60,64,67,0.15);
 }
 
 .home-heading {
   font-family: 'Google Sans', Arial, sans-serif;
-  font-size: 36px;
+  font-size: 38px;
   font-weight: 500;
   color: #202124;
   text-align: center;
   line-height: 1.1;
-  letter-spacing: -0.72px;
+  letter-spacing: -1.14px;
 }
 
 /* Prompt input card */
 .prompt-card {
   width: 100%;
   background: white;
-  border: 1px solid #7cb0f5;
-  border-radius: 16px;
+  border: 3px solid rgba(232,234,237,0.3);
+  border-radius: 24px;
+  box-shadow: 0px 0px 8px 0px rgba(0,0,0,0.16);
+  min-height: 140px;
 }
 
 .prompt-body {
-  padding: 12px;
+  padding: 16px;
 }
 
 .prompt-text {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
   color: #202124;
-  line-height: 24px;
+  line-height: 26px;
 }
 
 .prompt-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 4px 4px 12px;
+  padding: 0 0 0 16px;
 }
 
 .prompt-actions-left {
@@ -320,6 +320,7 @@ body[data-state="home"] .home-screen {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 8px 8px 0;
 }
 
 .prompt-model-label {
@@ -340,35 +341,42 @@ body[data-state="home"] .home-screen {
 .prompt-send-btn:hover { background: #1765cc; }
 .prompt-send-btn .material-symbols-rounded { font-size: 18px; }
 
-/* Planned roadtrips section */
+/* Road trip ideas section */
 .home-trips {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .planned-trips-heading {
   font-family: 'Google Sans', Arial, sans-serif;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 500;
   color: #202124;
-  line-height: 26px;
+  line-height: 28px;
 }
 
 .trips-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.trips-row {
+  display: flex;
   gap: 10px;
 }
 
 .trip-card {
+  flex: 1;
   background: white;
-  border-radius: 16px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 8px 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   cursor: pointer;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12);
   transition: box-shadow 0.2s;
 }
 .trip-card:hover {
@@ -383,43 +391,22 @@ body[data-state="home"] .home-screen {
   display: block;
 }
 
-.trip-card-footer {
+.trip-card-info {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
 .trip-card-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #202124;
-  line-height: 20px;
+  line-height: 24px;
 }
 
-.trip-card-time {
-  font-size: 11px;
+.trip-card-meta {
+  font-size: 12px;
   color: #9aa0a6;
   line-height: 16px;
-}
-
-.avatar-stack {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.avatar {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  border: 1px solid white;
-  object-fit: cover;
-  display: block;
-}
-
-.avatar--front {
-  margin-right: -13px;
-  z-index: 2;
-  position: relative;
 }
 
 /* Home disclaimer */

@@ -5,6 +5,32 @@ import { SUGGESTIONS, haversineKm } from '../constants.js';
 let turnIdCounter = 0;
 const nextId = () => `turn-${++turnIdCounter}`;
 
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+// Extract a short "Explore X" title from whatever the user typed.
+// Handles: "Explore Seattle on a 2-day...", "Trip to Bhopal", "Iceland road trip", etc.
+function extractDestination(text) {
+  const t = text.trim();
+
+  // "Explore X ..." — grab X before the first preposition / comma
+  let m = t.match(/^explore\s+(.+?)(?:\s+on\b|\s+in\b|\s+for\b|\s+with\b|\s+–|,|$)/i);
+  if (m) return 'Explore ' + toTitleCase(m[1].trim());
+
+  // "... trip to X" / "travel to X" / "visit X"
+  m = t.match(/(?:trip|travel|journey|visit)\s+to\s+(.+?)(?:\s+on\b|\s+in\b|\s+for\b|,|$)/i);
+  if (m) return 'Explore ' + toTitleCase(m[1].trim());
+
+  // "X road trip" / "X trip"
+  m = t.match(/^(.+?)\s+(?:road\s+)?trip\b/i);
+  if (m) return 'Explore ' + toTitleCase(m[1].trim());
+
+  // Fallback: first 2 words
+  const words = t.split(/\s+/);
+  return 'Explore ' + toTitleCase(words.slice(0, 2).join(' '));
+}
+
 function allPlaces(aiPlaces) {
   return aiPlaces.length ? aiPlaces : SUGGESTIONS;
 }
@@ -112,7 +138,7 @@ const useAppStore = create((set, get) => ({
 
   async goToMap(promptText) {
     const text = promptText || 'Plan me a road trip';
-    set({ screen: 'map', activeTab: 'plan-ai', tripName: text });
+    set({ screen: 'map', activeTab: 'plan-ai', tripName: extractDestination(text) });
 
     const turnId = nextId();
     set(s => ({

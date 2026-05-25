@@ -43,6 +43,57 @@ const SEARCH_OVERRIDES = {
 };
 
 /* ══════════════════════════════════════════════
+   CLAUDE AI  (via local proxy at /api/claude)
+══════════════════════════════════════════════ */
+
+const CLAUDE_PROXY  = '/api/claude';
+const CLAUDE_MODEL  = 'claude-haiku-4-5-20251001';
+
+const CLAUDE_SYSTEM = `You are a Google Maps travel planner. Given a trip description or query, return ONLY a valid JSON array of place objects — no markdown, no explanation, nothing else outside the array.
+
+Each object must use exactly these fields:
+{"id":"ai1","name":"Place Name","category":"scenic","lat":64.32,"lng":-20.12,"rating":4.7,"desc":"1-2 sentence description.","seed":101}
+
+Rules:
+- "category": exactly one of scenic | restaurant | hotel
+- "lat"/"lng": accurate real-world coordinates
+- "rating": 4.0–5.0
+- For restaurant or hotel add "price": "$" | "$$" | "$$$"
+- Return 8-12 places, mix categories to match the query
+- Output the raw JSON array only — start with [ end with ]`;
+
+function parsePlaces(text) {
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const s = clean.indexOf('['), e = clean.lastIndexOf(']');
+  const places = JSON.parse(s !== -1 && e !== -1 ? clean.slice(s, e + 1) : clean);
+  return places.map((p, i) => ({ ...p, id: `ai-${Date.now()}-${i}`, seed: (i + 1) * 97 + 3 }));
+}
+
+async function callClaude(history) {
+  const messages = history.map(m => ({
+    role:    m.role === 'model' ? 'assistant' : m.role,
+    content: m.text,
+  }));
+  const resp = await fetch(CLAUDE_PROXY, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model:      CLAUDE_MODEL,
+      max_tokens: 2048,
+      system:     CLAUDE_SYSTEM,
+      messages,
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(`Claude ${resp.status}: ${err?.error?.message ?? ''}`);
+  }
+  const data = await resp.json();
+  const raw  = data.content?.[0]?.text ?? '[]';
+  return parsePlaces(raw);
+}
+
+/* ══════════════════════════════════════════════
    IMAGE CACHE
 ══════════════════════════════════════════════ */
 
@@ -51,19 +102,51 @@ let   placesService = null;
 
 function fetchPlaceImage(name) {
   if (placeImages.has(name) || !placesService) return Promise.resolve();
-  const query = SEARCH_OVERRIDES[name] ?? `${name} Iceland`;
+  const query = SEARCH_OVERRIDES[name] ?? name;
+
   return new Promise(resolve => {
+    // Step 1: find the place_id (findPlaceFromQuery only returns ~1 photo)
     placesService.findPlaceFromQuery(
-      { query, fields: ['photos'] },
+      { query, fields: ['place_id', 'photos'] },
       (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results?.[0]?.photos?.[0]) {
-          const photo = results[0].photos[0];
-          placeImages.set(name, {
-            small: photo.getUrl({ maxWidth: 800 }),
-            thumb: photo.getUrl({ maxWidth: 120 }),
-          });
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.[0]) {
+          resolve(); return;
         }
-        resolve();
+
+        const firstResult = results[0];
+        const placeId     = firstResult.place_id;
+
+        // Step 2: getDetails gives up to 10 photos
+        if (placeId) {
+          placesService.getDetails(
+            { placeId, fields: ['photos'] },
+            (place, detailStatus) => {
+              const photoSrc = (detailStatus === google.maps.places.PlacesServiceStatus.OK && place?.photos?.length)
+                ? place.photos
+                : firstResult.photos ?? [];
+
+              if (photoSrc.length) {
+                const entries = photoSrc.slice(0, 3).map(p => ({
+                  small: p.getUrl({ maxWidth: 800 }),
+                  thumb: p.getUrl({ maxWidth: 120 }),
+                }));
+                placeImages.set(name, { photos: entries, small: entries[0].small, thumb: entries[0].thumb });
+              }
+              resolve();
+            }
+          );
+        } else {
+          // No place_id — use whatever photos findPlaceFromQuery gave us
+          const photoSrc = firstResult.photos ?? [];
+          if (photoSrc.length) {
+            const entries = photoSrc.slice(0, 3).map(p => ({
+              small: p.getUrl({ maxWidth: 800 }),
+              thumb: p.getUrl({ maxWidth: 120 }),
+            }));
+            placeImages.set(name, { photos: entries, small: entries[0].small, thumb: entries[0].thumb });
+          }
+          resolve();
+        }
       }
     );
   });
@@ -77,7 +160,7 @@ function getImg(name, seed, size = 'small') {
 }
 
 async function preloadImages() {
-  await Promise.all(SUGGESTIONS.map(s => fetchPlaceImage(s.name)));
+  await Promise.all(allPlaces().map(s => fetchPlaceImage(s.name)));
   refreshCardImages();
 }
 
@@ -106,6 +189,11 @@ let routeStops    = [];      // suggestions added to route (in order)
 let savedPlaces   = {};      // suggId → suggestion
 let activeFilter  = 'all';
 
+let aiPlaces            = [];   // places returned by Gemini this session
+let conversationHistory = [];   // { role, text }[] — full Gemini thread
+
+function allPlaces() { return aiPlaces.length ? aiPlaces : SUGGESTIONS; }
+
 let SquarePin     = null;
 let SuggestionPin = null;
 let BookmarkPin   = null;
@@ -127,6 +215,9 @@ function setState(s) {
 function goToMap() {
   if (appState !== 'home') return;
 
+  const promptEl  = document.querySelector('.prompt-text');
+  const promptText = (promptEl?.textContent || '').trim() || 'Plan me a road trip';
+
   const homeScreen = document.getElementById('homeScreen');
   homeScreen.style.animation = 'screenExitLeft 0.28s ease forwards';
 
@@ -139,7 +230,7 @@ function goToMap() {
     mapView.style.animation = 'screenEnter 0.32s ease forwards';
     setTimeout(() => { mapView.style.animation = ''; }, 320);
 
-    setTimeout(animateSuggestions, 420);
+    setTimeout(() => animateSuggestions(promptText), 420);
   }, 240);
 }
 
@@ -246,7 +337,7 @@ function buildChipRow(chips) {
       // Disable all chips in this row
       row.querySelectorAll('.chat-chip').forEach(b => { b.disabled = true; });
 
-      const filtered = SUGGESTIONS.filter(s => s.category === chipDef.filter);
+      const filtered = allPlaces().filter(s => s.category === chipDef.filter);
       const def      = CHIP_DEFS[chipDef.filter] || {};
 
       appendChatTurn({
@@ -347,26 +438,103 @@ function typeInto(el, text, msPerWord, done) {
   tick();
 }
 
-function animateSuggestions() {
-  // Start focused on scenic spots; map pins also filter to scenic
-  activeFilter = 'scenic';
+/* Create a chat turn with live thinking dots; returns { resolve, error } to fill in later */
+function startThinkingTurn(userText) {
+  const pane = document.getElementById('paneplanai');
+  const turn = document.createElement('div');
+  turn.className = 'chat-turn';
 
-  const scenic = SUGGESTIONS.filter(s => s.category === 'scenic');
+  if (userText) {
+    const ub = document.createElement('div');
+    ub.className = 'chat-bubble--user';
+    ub.textContent = userText;
+    turn.appendChild(ub);
+  }
 
-  appendChatTurn({
-    userText:  'Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.',
-    aiText:    'Here are the top scenic spots for your Iceland road trip',
-    cards:     scenic,
-    moreLabel: 'more scenic spots',
+  const aiWrap   = document.createElement('div');
+  aiWrap.className = 'chat-bubble-ai-wrap';
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'chat-bubble--ai';
+  aiBubble.innerHTML = `<div class="chat-thinking"><span></span><span></span><span></span></div>`;
+  aiWrap.appendChild(createGeminiIconEl());
+  aiWrap.appendChild(aiBubble);
+  turn.appendChild(aiWrap);
+  pane.appendChild(turn);
+  scrollChatToBottom();
+
+  return {
+    resolve({ aiText, cards = [], chips = [], moreLabel = 'more places' }) {
+      aiBubble.innerHTML = '';
+      typeInto(aiBubble, aiText, 36, () => {
+        if (chips.length) turn.appendChild(buildChipRow(chips));
+        if (cards.length) {
+          const cardList = buildCardList(cards, { limit: 5, moreLabel });
+          turn.appendChild(cardList);
+          Array.from(cardList.querySelectorAll('.suggestion-card')).forEach((c, i) => {
+            setTimeout(() => c.classList.add('is-visible'), i * 55);
+          });
+        }
+        scrollChatToBottom();
+      });
+    },
+    error(msg) {
+      aiBubble.innerHTML = `<span style="color:#ea4335">${msg}</span>`;
+      scrollChatToBottom();
+    },
+  };
+}
+
+async function animateSuggestions(promptText) {
+  conversationHistory = [{ role: 'user', text: promptText }];
+  activeFilter = 'all';
+
+  const thinking = startThinkingTurn(promptText);
+
+  let places;
+  try {
+    places = await callClaude(conversationHistory);
+  } catch (err) {
+    console.error('Claude error:', err);
+    thinking.error('Couldn\'t reach Claude — showing sample places.');
+    places = SUGGESTIONS;
+  }
+
+  aiPlaces = places;
+  conversationHistory.push({ role: 'assistant', text: JSON.stringify(places) });
+
+  // Recentre map to fit returned places
+  if (mapReady && places.length) {
+    const bounds = new google.maps.LatLngBounds();
+    places.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }));
+    map.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 20 });
+  }
+
+  const scenic      = places.filter(s => s.category === 'scenic');
+  const hasHotel    = places.some(s => s.category === 'hotel');
+  const hasFood     = places.some(s => s.category === 'restaurant');
+  const mainCards   = scenic.length ? scenic : places.slice(0, 6);
+  const mainLabel   = scenic.length ? 'more scenic spots' : 'more places';
+  const mainText    = scenic.length
+    ? `Here are the top scenic spots for your trip`
+    : `Here are ${places.length} suggestions for your trip`;
+
+  thinking.resolve({
+    aiText:    mainText,
+    cards:     mainCards,
+    moreLabel: mainLabel,
     chips: [
-      { label: 'Hotels', icon: 'hotel',      filter: 'hotel'      },
-      { label: 'Food',   icon: 'restaurant', filter: 'restaurant' },
-    ],
-    thinkDelay: 1100,
+      hasHotel && { label: 'Hotels', icon: 'hotel',      filter: 'hotel'      },
+      hasFood  && { label: 'Food',   icon: 'restaurant', filter: 'restaurant' },
+    ].filter(Boolean),
   });
 
-  // All suggestion pins rendered but filtered to scenic (map is workspace — all scenic pins shown)
-  setTimeout(() => { if (mapReady) renderSuggestionPins(); }, 1700);
+  activeFilter = scenic.length ? 'scenic' : 'all';
+
+  setTimeout(() => {
+    if (mapReady) { renderSuggestionPins(); filterSuggestionPins(); }
+    places.forEach(p => fetchPlaceImage(p.name));
+    setTimeout(refreshCardImages, 2500);
+  }, 800);
 }
 
 /* ══════════════════════════════════════════════
@@ -591,7 +759,7 @@ function zoomOut() { if (map) map.setZoom(map.getZoom() - 1); }
 
 function renderSuggestionPins() {
   clearSuggestionPins();
-  SUGGESTIONS.forEach((sugg, i) => {
+  allPlaces().forEach((sugg, i) => {
     if (routeStops.find(s => s.id === sugg.id)) return; // has square pin already
     setTimeout(() => {
       const pin = new SuggestionPin(sugg);
@@ -617,7 +785,7 @@ function filterSuggestionPin(pin, category) {
 
 function filterSuggestionPins() {
   Object.keys(suggPinObjs).forEach(id => {
-    const sugg = SUGGESTIONS.find(s => s.id === id);
+    const sugg = allPlaces().find(s => s.id === id);
     if (sugg) filterSuggestionPin(suggPinObjs[id], sugg.category);
   });
 }
@@ -653,6 +821,19 @@ function renumberPins() {
    ROUTE POLYLINE
 ══════════════════════════════════════════════ */
 
+function drawStraightPolyline() {
+  if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+  routePolyline = new google.maps.Polyline({
+    path:          routeStops.map(s => ({ lat: s.lat, lng: s.lng })),
+    strokeColor:   '#1a73e8',
+    strokeWeight:  3,
+    strokeOpacity: 0.7,
+    geodesic:      true,
+    map,
+    zIndex: 5,
+  });
+}
+
 function renderPolyline() {
   if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
   if (routeStops.length < 2) return;
@@ -664,7 +845,11 @@ function renderPolyline() {
     travelMode:  google.maps.TravelMode.DRIVING,
     optimizeWaypoints: false,
   }, (result, status) => {
-    if (status !== 'OK') return;
+    if (status !== 'OK') {
+      console.warn('DirectionsService:', status, '— drawing straight line');
+      drawStraightPolyline();
+      return;
+    }
     routePolyline = new google.maps.Polyline({
       path:          result.routes[0].overview_path,
       strokeColor:   '#1a73e8',
@@ -687,7 +872,11 @@ function renderPolylineAnimated() {
     travelMode:  google.maps.TravelMode.DRIVING,
     optimizeWaypoints: false,
   }, (result, status) => {
-    if (status !== 'OK') return;
+    if (status !== 'OK') {
+      console.warn('DirectionsService:', status, '— drawing straight line');
+      drawStraightPolyline();
+      return;
+    }
     const fullPath = result.routes[0].overview_path;
     routePolyline = new google.maps.Polyline({
       path:          [fullPath[0]],
@@ -755,7 +944,7 @@ function bestInsertIndex(newStop) {
 
 function addToRoute(suggId, insertAt) {
   if (routeStops.find(s => s.id === suggId)) return;
-  const sugg = SUGGESTIONS.find(s => s.id === suggId);
+  const sugg = allPlaces().find(s => s.id === suggId);
   if (!sugg) return;
 
   if (insertAt !== undefined) {
@@ -807,7 +996,7 @@ function removeStop(id) {
 
   // Re-add suggestion pin for this place
   if (mapReady) {
-    const sugg = SUGGESTIONS.find(s => s.id === id);
+    const sugg = allPlaces().find(s => s.id === id);
     if (sugg) {
       const pin = new SuggestionPin(sugg);
       pin.setMap(map);
@@ -1122,7 +1311,7 @@ function updateSuggestionCardUI(suggId) {
 ══════════════════════════════════════════════ */
 
 function saveSuggestion(suggId) {
-  const sugg = SUGGESTIONS.find(s => s.id === suggId);
+  const sugg = allPlaces().find(s => s.id === suggId);
   if (!sugg) return;
 
   if (savedPlaces[suggId]) {
@@ -1190,6 +1379,30 @@ function renderSavedList() {
    PLACE CARD (on pin click)
 ══════════════════════════════════════════════ */
 
+let currentCardPhotos = [];
+let currentPhotoIndex = 0;
+
+function showCardPhoto(index) {
+  const count = currentCardPhotos.length;
+  if (!count) return;
+  currentPhotoIndex = ((index % count) + count) % count;
+
+  document.getElementById('placeCardImg').src = currentCardPhotos[currentPhotoIndex];
+
+  const dots = document.querySelectorAll('.place-card-dot');
+  dots.forEach((d, i) => {
+    d.style.display = i < count ? '' : 'none';
+    d.classList.toggle('place-card-dot--active', i === currentPhotoIndex);
+  });
+
+  // Hide nav arrows when there's only one photo
+  document.querySelector('.place-card-nav--prev').style.display = count > 1 ? '' : 'none';
+  document.querySelector('.place-card-nav--next').style.display = count > 1 ? '' : 'none';
+}
+
+function prevPhoto(e) { e.stopPropagation(); showCardPhoto(currentPhotoIndex - 1); }
+function nextPhoto(e) { e.stopPropagation(); showCardPhoto(currentPhotoIndex + 1); }
+
 function showSuggCard(sugg, fromEl) {
   const card    = document.getElementById('placeCard');
   const mapArea = document.querySelector('.map-area');
@@ -1221,8 +1434,13 @@ function showSuggCard(sugg, fromEl) {
   card.style.left = left + 'px';
   card.style.top  = top  + 'px';
 
-  document.getElementById('placeCardImg').src = getImg(sugg.name, sugg.seed);
-  document.getElementById('placeCardName').textContent = sugg.name;
+  // Build photo array: use all fetched photos, fall back to single picsum image
+  const entry = placeImages.get(sugg.name);
+  currentCardPhotos = entry?.photos?.map(p => p.small) ?? [getImg(sugg.name, sugg.seed)];
+  currentPhotoIndex = 0;
+  showCardPhoto(0);
+
+  document.getElementById('placeCardName').textContent   = sugg.name;
   document.getElementById('placeCardRating').textContent = sugg.rating;
 
   // Highlight suggestion pin
@@ -1233,11 +1451,28 @@ function showSuggCard(sugg, fromEl) {
   updateBookmarkBtn();
   updateRouteBtn();
   card.classList.add('is-visible');
+
+  // If photos aren't loaded yet (or only 1 came back), fetch now and refresh carousel
+  const existingEntry = placeImages.get(sugg.name);
+  if (!existingEntry || existingEntry.photos.length < 2) {
+    placeImages.delete(sugg.name); // clear so fetchPlaceImage re-runs
+    fetchPlaceImage(sugg.name).then(() => {
+      if (currentCardData?.id !== sugg.id) return; // card was closed/changed
+      const fresh = placeImages.get(sugg.name);
+      if (fresh?.photos?.length > currentCardPhotos.length) {
+        currentCardPhotos = fresh.photos.map(p => p.small);
+        showCardPhoto(0);
+        // Update thumbnail in any open chat cards too
+        refreshCardImages();
+      }
+    });
+  }
 }
 
 function closePlaceCard() {
   document.getElementById('placeCard').classList.remove('is-visible');
   Object.values(suggPinObjs).forEach(p => p.setActive(false));
+  currentCardPhotos = [];
 }
 
 function updateBookmarkBtn() {
@@ -1272,48 +1507,58 @@ function addToRouteFromCard() {
    FOOTER
 ══════════════════════════════════════════════ */
 
-function submitFooter() {
+async function submitFooter() {
   const input = document.getElementById('footerInput');
   const text  = input?.value.trim();
   if (!text && !activeCircle) return;
   if (input) input.value = '';
 
-  // Area search takes priority when a circle is drawn
   if (activeCircle) {
     doAreaSearch(text || 'Find things in this area');
     return;
   }
 
-  const lower = text.toLowerCase();
-  let filtered, aiText, moreLabel, newFilter;
+  const thinking = startThinkingTurn(text);
+  conversationHistory.push({ role: 'user', text });
 
-  if (/hotel|stay|sleep|accommodation|lodge/i.test(lower)) {
-    newFilter  = 'hotel';
-    filtered   = SUGGESTIONS.filter(s => s.category === 'hotel');
-    aiText     = CHIP_DEFS.hotel.aiText;
-    moreLabel  = CHIP_DEFS.hotel.moreLabel;
-  } else if (/restaurant|food|eat|dinner|lunch|cafe|coffee|drink/i.test(lower)) {
-    newFilter  = 'restaurant';
-    filtered   = SUGGESTIONS.filter(s => s.category === 'restaurant');
-    aiText     = CHIP_DEFS.restaurant.aiText;
-    moreLabel  = CHIP_DEFS.restaurant.moreLabel;
-  } else if (/scenic|view|nature|waterfall|landscape|outdoor|hike/i.test(lower)) {
-    newFilter  = 'scenic';
-    filtered   = SUGGESTIONS.filter(s => s.category === 'scenic');
-    aiText     = CHIP_DEFS.scenic.aiText;
-    moreLabel  = CHIP_DEFS.scenic.moreLabel;
-  } else {
-    newFilter  = 'scenic';
-    filtered   = SUGGESTIONS.filter(s => s.category === 'scenic');
-    aiText     = 'Here are some ideas for your Iceland trip';
-    moreLabel  = 'more places';
+  let places;
+  try {
+    places = await callClaude(conversationHistory);
+  } catch (err) {
+    console.error('Claude error:', err);
+    thinking.error('Couldn\'t reach Claude — try again.');
+    conversationHistory.pop();
+    return;
   }
 
-  // Update map pins to match
-  activeFilter = newFilter;
-  filterSuggestionPins();
+  // Merge new places in; preserve existing so route/save still works
+  aiPlaces = [...aiPlaces, ...places];
+  conversationHistory.push({ role: 'assistant', text: JSON.stringify(places) });
 
-  appendChatTurn({ userText: text, aiText, cards: filtered, moreLabel, thinkDelay: 900 });
+  // Add new suggestion pins
+  if (mapReady) {
+    activeFilter = 'all';
+    places.forEach((sugg, i) => {
+      if (suggPinObjs[sugg.id] || routeStops.find(s => s.id === sugg.id)) return;
+      setTimeout(() => {
+        const pin = new SuggestionPin(sugg);
+        pin.setMap(map);
+        suggPinObjs[sugg.id] = pin;
+        setTimeout(() => pin.fadeIn(), 20);
+      }, 45 * i);
+    });
+    filterSuggestionPins();
+  }
+
+  places.forEach(p => fetchPlaceImage(p.name));
+
+  thinking.resolve({
+    aiText:    `Here are ${places.length} places for you`,
+    cards:     places,
+    moreLabel: 'more places',
+  });
+
+  setTimeout(refreshCardImages, 2500);
 }
 
 /* ══════════════════════════════════════════════
@@ -1633,21 +1878,56 @@ function removeCircle() {
    AI AREA SEARCH
 ══════════════════════════════════════════════ */
 
-function doAreaSearch(userPrompt) {
-  const radiusStr = activeCircle ? `${activeCircle.radiusKm.toFixed(1)} km` : 'the area';
+async function doAreaSearch(userPrompt) {
+  const thinking = startThinkingTurn(userPrompt);
 
-  appendChatTurn({
-    userText:   userPrompt,
-    aiText:     `6 suggestions within ${radiusStr}`,
-    cards:      AREA_RESULTS,
-    cardLimit:  6,
-    thinkDelay: 1400,
+  // Convert circle centre pixels → lat/lng for Gemini context
+  let locationCtx = '';
+  if (activeCircle && mapReady) {
+    try {
+      const proj   = map.getProjection();
+      const bounds = map.getBounds();
+      if (proj && bounds) {
+        const mapDiv = document.getElementById('map');
+        const w = mapDiv.offsetWidth, h = mapDiv.offsetHeight;
+        const ne = bounds.getNorthEast(), sw = bounds.getSouthWest();
+        const nePt = proj.fromLatLngToPoint(ne), swPt = proj.fromLatLngToPoint(sw);
+        const wx = swPt.x + (activeCircle.cx / w) * (nePt.x - swPt.x);
+        const wy = nePt.y + (activeCircle.cy / h) * (swPt.y - nePt.y);
+        const centre = proj.fromPointToLatLng(new google.maps.Point(wx, wy));
+        locationCtx = ` The user has drawn a search circle centred at ${centre.lat().toFixed(4)}°N, ${centre.lng().toFixed(4)}°E with a radius of ${activeCircle.radiusKm.toFixed(1)} km. Return places within that circle.`;
+      }
+    } catch (_) {}
+  }
+
+  const fullPrompt = userPrompt + locationCtx;
+  conversationHistory.push({ role: 'user', text: fullPrompt });
+
+  let places;
+  try {
+    places = await callClaude(conversationHistory);
+  } catch (err) {
+    console.error('Claude error:', err);
+    thinking.error('Couldn\'t reach Claude — try again.');
+    conversationHistory.pop();
+    return;
+  }
+
+  aiPlaces = [...aiPlaces, ...places];
+  conversationHistory.push({ role: 'assistant', text: JSON.stringify(places) });
+
+  const radiusStr = activeCircle ? `${activeCircle.radiusKm.toFixed(1)} km` : 'the area';
+  thinking.resolve({
+    aiText:    `${places.length} suggestions within ${radiusStr}`,
+    cards:     places,
+    moreLabel: 'more places',
   });
 
-  // Add map pins and fetch photos after thinking resolves
+  places.forEach(p => fetchPlaceImage(p.name));
+
   setTimeout(() => {
     if (mapReady) {
-      AREA_RESULTS.forEach(s => {
+      places.forEach(s => {
         if (areaResultPins[s.id]) return;
         const pin = new SuggestionPin(s);
         pin.setMap(map);
@@ -1656,7 +1936,6 @@ function doAreaSearch(userPrompt) {
         setTimeout(() => pin.fadeIn?.(), 100);
       });
     }
-    AREA_RESULTS.forEach(s => fetchPlaceImage(s.name));
-    setTimeout(refreshCardImages, 2000);
-  }, 1500);
+    setTimeout(refreshCardImages, 2500);
+  }, 100);
 }

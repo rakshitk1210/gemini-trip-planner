@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iteration 13 — AI Trip Planning</title>
+  <title>Iteration 13 — Dual Route Options</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 </head>
@@ -46,114 +46,7 @@
   <div class="stage">
 
     <!-- ═══════════════════════════════════════
-         HOME SCREEN
-    ═══════════════════════════════════════ -->
-    <main class="home-screen" id="homeScreen">
-      <div class="home-content">
-
-        <section class="home-hero">
-          <div class="hero-heading-group">
-            <div class="gemini-logo-wrap">
-              <svg width="36" height="36" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 1C14 1 14.15 13.85 1 14C14.15 14.15 14 27 14 27C14 27 13.85 14.15 27 14C13.85 13.85 14 1 14 1Z" fill="url(#gemGrad)"/>
-                <defs>
-                  <linearGradient id="gemGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#4285F4"/>
-                    <stop offset="33%" stop-color="#34A853"/>
-                    <stop offset="66%" stop-color="#FBBC04"/>
-                    <stop offset="100%" stop-color="#EA4335"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <h1 class="home-heading">Hi Rakshit. Where are you headed?</h1>
-          </div>
-
-          <div class="prompt-card">
-            <div class="prompt-body">
-              <p class="prompt-text">Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.</p>
-            </div>
-            <div class="prompt-actions">
-              <div class="prompt-actions-left">
-                <span class="material-symbols-rounded prompt-add-icon">add</span>
-                <div class="vehicle-selector-wrap">
-                  <button class="vehicle-chip" onclick="toggleVehicleDropdown(event)">
-                    <span class="material-symbols-rounded vehicle-chip-icon" id="vehicleChipIcon">local_gas_station</span>
-                    <span class="vehicle-chip-label" id="vehicleChipLabel">Gas</span>
-                    <span class="material-symbols-rounded vehicle-chip-chevron" id="vehicleChipChevron">expand_more</span>
-                  </button>
-                  <div class="vehicle-dropdown" id="vehicleDropdown">
-                    <button class="vehicle-option" onclick="selectVehicle(this, 'Gas', 'local_gas_station')">
-                      <div class="vehicle-radio vehicle-radio--selected"></div>
-                      <span class="vehicle-option-label">Gas</span>
-                      <span class="material-symbols-rounded vehicle-option-icon">local_gas_station</span>
-                    </button>
-                    <div class="vehicle-option-divider"></div>
-                    <button class="vehicle-option" onclick="selectVehicle(this, 'Electric', 'power')">
-                      <div class="vehicle-radio"></div>
-                      <span class="vehicle-option-label">Electric</span>
-                      <span class="material-symbols-rounded vehicle-option-icon">power</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="prompt-actions-right">
-                <span class="prompt-model-label">Gemini 3.1 Pro</span>
-                <button class="prompt-send-btn" onclick="goToMap()">
-                  <span class="material-symbols-rounded">arrow_forward</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="home-trips">
-          <h2 class="planned-trips-heading">Road trip ideas</h2>
-          <div class="trips-grid">
-
-            <div class="trips-row">
-              <div class="trip-card" onclick="goToMap()">
-                <img class="trip-card-img" src="https://picsum.photos/seed/iceland-ring/400/160" alt="Ring Road, Iceland">
-                <div class="trip-card-info">
-                  <div class="trip-card-name">Ring Road, Iceland</div>
-                  <div class="trip-card-meta">12-hour drive • 800 miles</div>
-                </div>
-              </div>
-              <div class="trip-card" onclick="goToMap()">
-                <img class="trip-card-img" src="https://picsum.photos/seed/amalfi-coast/400/160" alt="Amalfi Coast, Italy">
-                <div class="trip-card-info">
-                  <div class="trip-card-name">Amalfi Coast, Italy</div>
-                  <div class="trip-card-meta">3-hour drive • 90 miles</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="trips-row">
-              <div class="trip-card" onclick="goToMap()">
-                <img class="trip-card-img" src="https://picsum.photos/seed/garden-route/400/160" alt="Garden Route, South Africa">
-                <div class="trip-card-info">
-                  <div class="trip-card-name">Garden Route, South Africa</div>
-                  <div class="trip-card-meta">5-hour drive • 200 miles</div>
-                </div>
-              </div>
-              <div class="trip-card" onclick="goToMap()">
-                <img class="trip-card-img" src="https://picsum.photos/seed/ocean-road/400/160" alt="Great Ocean Road, Australia">
-                <div class="trip-card-info">
-                  <div class="trip-card-name">Great Ocean Road, Australia</div>
-                  <div class="trip-card-meta">8-hour drive • 450 miles</div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-      </div>
-      <div class="home-disclaimer">Gemini can make mistakes</div>
-    </main>
-
-    <!-- ═══════════════════════════════════════
-         MAP VIEW (Plan AI + Route tabs)
+         MAP VIEW (panel + map, always rendered)
     ═══════════════════════════════════════ -->
     <div class="map-view" id="mapView">
 
@@ -166,46 +59,55 @@
           <button class="tab-btn" id="tabRouteBtn" onclick="showTab('route')">Route</button>
         </div>
 
-        <!-- Scrollable Content Area -->
+        <!-- Scrollable Content -->
         <div class="panel-content" id="panelContent">
 
           <!-- ── Plan AI Pane ── -->
           <div class="tab-pane" id="paneplanai">
-            <div class="ai-bubble-wrap">
-              <div class="ai-bubble" id="aiBubble">
-                Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.
-              </div>
-            </div>
-            <p class="itinerary-intro">Here is your Iceland road trip itinerary</p>
 
-            <div class="day-section" id="daySection1">
-              <div class="day-label">Day 1 · Golden Circle</div>
-              <p class="day-desc">Start at Þingvellir National Park, drive through the geothermal fields of Geysir, marvel at Gullfoss waterfall, soak at Secret Lagoon, visit Kerið Crater, then chase Seljalandsfoss before settling into Vík for the night.</p>
-              <div class="day-images">
-                <img class="day-img" src="https://picsum.photos/seed/geysir/200/100" alt="">
-                <img class="day-img" src="https://picsum.photos/seed/gullfoss/200/100" alt="">
-              </div>
+            <!-- 1. Trip header card (echoes the query) -->
+            <div class="trip-header-card" id="tripHeaderCard">
+              <p class="trip-header-text">Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.</p>
             </div>
 
-            <div class="day-divider"></div>
+            <!-- 2. Options label -->
+            <p class="options-label" id="optionsLabel">Here are two options for your Iceland road trip itinerary</p>
 
-            <div class="day-section" id="daySection2">
-              <div class="day-label">Day 2 · South Coast</div>
-              <p class="day-desc">Walk Víkurfjara's black sand beach, hike the cliffs at Dyrhólaey for puffin views, then stand in the mist of Skógafoss before the scenic drive back to Reykjavík.</p>
-              <div class="day-images">
-                <img class="day-img" src="https://picsum.photos/seed/blacksand/200/100" alt="">
-                <img class="day-img" src="https://picsum.photos/seed/skogafoss/200/100" alt="">
+            <!-- 3. Option pills -->
+            <div class="route-options-row" id="routeOptionsRow">
+              <button class="route-option-pill route-option-pill--active" id="optionPill1" onclick="switchRoute('A')">Option 1</button>
+              <button class="route-option-pill" id="optionPill2" onclick="switchRoute('B')">Option 2</button>
+            </div>
+
+            <!-- 4. Day content card -->
+            <div class="days-card" id="daysCard">
+              <div class="day-section" id="daySection1">
+                <div class="day-label"></div>
+                <p class="day-desc"></p>
+                <div class="day-images">
+                  <img class="day-img" src="" alt="">
+                  <img class="day-img" src="" alt="">
+                </div>
+              </div>
+              <div class="day-divider"></div>
+              <div class="day-section" id="daySection2">
+                <div class="day-label"></div>
+                <p class="day-desc"></p>
+                <div class="day-images">
+                  <img class="day-img" src="" alt="">
+                  <img class="day-img" src="" alt="">
+                </div>
               </div>
             </div>
 
-            <!-- Skeleton loaders (shown while search is in progress) -->
+            <!-- Skeleton loaders -->
             <div id="searchSkeleton" class="search-skeleton">
               <div class="skeleton-row"></div>
               <div class="skeleton-row"></div>
               <div class="skeleton-row"></div>
             </div>
 
-            <!-- Hotel results (shown after search completes) -->
+            <!-- Hotel results -->
             <div id="searchResultsSection" class="search-results-section">
               <div class="search-results-label">Hotels Along Your Iceland Route</div>
               <div class="search-results-list" id="searchResultsList"></div>
@@ -215,9 +117,7 @@
 
           <!-- ── Route Pane ── -->
           <div class="tab-pane tab-pane--hidden" id="paneroute">
-            <ul class="stop-list" id="stopList">
-              <!-- Rendered by JS -->
-            </ul>
+            <ul class="stop-list" id="stopList"></ul>
 
             <div class="route-spacer"></div>
 
@@ -243,7 +143,6 @@
 
             <div class="route-spacer"></div>
 
-            <!-- Saved places section (shown when anything is bookmarked) -->
             <div id="savedSection" class="saved-section" style="display:none">
               <div class="saved-heading">Saved</div>
               <ul class="saved-list" id="savedList"></ul>
@@ -256,7 +155,7 @@
         <div class="panel-footer">
           <div class="footer-input-row">
             <div class="footer-input-wrap">
-              <input type="text" class="footer-input" placeholder="Tell me more ...">
+              <input type="text" class="footer-input" placeholder="Show me hotels along my route">
               <button class="footer-send-btn" onclick="submitSearch()">
                 <span class="material-symbols-rounded">arrow_forward</span>
               </button>
@@ -271,13 +170,13 @@
       <div class="map-area">
         <div id="map"></div>
 
-        <!-- Showing hotels badge (visible while hotel pins are on map) -->
+        <!-- Showing hotels badge -->
         <div class="showing-hotels-badge" id="showingHotelsBadge" onclick="dismissHotelPins()" style="display:none">
           <span class="showing-hotels-label">Showing hotels</span>
           <span class="material-symbols-rounded showing-hotels-close">close</span>
         </div>
 
-        <!-- Place Card (shown on pin click) -->
+        <!-- Place Card -->
         <div class="place-card" id="placeCard">
           <div class="place-card-img-wrap">
             <img class="place-card-img" id="placeCardImg" src="" alt="">
@@ -357,6 +256,106 @@
       </div><!-- /map-area -->
 
     </div><!-- /map-view -->
+
+    <!-- ═══════════════════════════════════════
+         HOME OVERLAY
+         Covers the full stage. Fades out when
+         body[data-state] is plan-ai or route.
+    ═══════════════════════════════════════ -->
+    <div class="home-overlay" id="homeOverlay">
+      <div class="home-overlay-content">
+
+        <div class="home-hero">
+          <div class="gemini-logo-wrap">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 1C16 1 16.17 15.83 1 16C16.17 16.17 16 31 16 31C16 31 15.83 16.17 31 16C15.83 15.83 16 1 16 1Z" fill="url(#gemGrad13)"/>
+              <defs>
+                <linearGradient id="gemGrad13" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#4285F4"/>
+                  <stop offset="40%" stop-color="#9C27B0"/>
+                  <stop offset="75%" stop-color="#EA4335"/>
+                  <stop offset="100%" stop-color="#FBBC04"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <h1 class="home-heading">Hi Rakshit. Where are you headed?</h1>
+        </div>
+
+        <div class="query-card">
+          <div class="query-card-body">
+            <p class="query-card-text">Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.</p>
+          </div>
+          <div class="query-card-footer">
+            <div class="query-card-left">
+              <span class="material-symbols-rounded query-add-icon">add</span>
+              <div class="vehicle-selector-wrap">
+                <button class="vehicle-chip" onclick="toggleVehicleDropdown(event)">
+                  <span class="material-symbols-rounded vehicle-chip-icon" id="vehicleChipIcon">local_gas_station</span>
+                  <span class="vehicle-chip-label" id="vehicleChipLabel">Gas</span>
+                  <span class="material-symbols-rounded vehicle-chip-chevron" id="vehicleChipChevron">expand_more</span>
+                </button>
+                <div class="vehicle-dropdown" id="vehicleDropdown">
+                  <button class="vehicle-option" onclick="selectVehicle(this, 'Gas', 'local_gas_station')">
+                    <div class="vehicle-radio vehicle-radio--selected"></div>
+                    <span class="vehicle-option-label">Gas</span>
+                    <span class="material-symbols-rounded vehicle-option-icon">local_gas_station</span>
+                  </button>
+                  <div class="vehicle-option-divider"></div>
+                  <button class="vehicle-option" onclick="selectVehicle(this, 'Electric', 'power')">
+                    <div class="vehicle-radio"></div>
+                    <span class="vehicle-option-label">Electric</span>
+                    <span class="material-symbols-rounded vehicle-option-icon">power</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="query-card-right">
+              <span class="query-model-label">Gemini 3.1 Pro</span>
+              <button class="query-send-btn" onclick="goToMap()">
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-trips">
+          <h2 class="planned-trips-heading">Planned roadtrips</h2>
+          <div class="trips-grid">
+
+            <div class="trip-card" onclick="goToMap()">
+              <img class="trip-card-img" src="https://picsum.photos/seed/iceland1/400/160" alt="Iceland Golden Circle">
+              <div class="trip-card-footer">
+                <div class="trip-card-text">
+                  <div class="trip-card-name">Iceland Golden Circle</div>
+                  <div class="trip-card-time">Just now</div>
+                </div>
+                <div class="avatar-stack">
+                  <img class="avatar avatar--front" src="https://picsum.photos/seed/11/26/26" alt="">
+                  <img class="avatar" src="https://picsum.photos/seed/22/26/26" alt="">
+                </div>
+              </div>
+            </div>
+
+            <div class="trip-card" onclick="goToMap()">
+              <img class="trip-card-img" src="https://picsum.photos/seed/iceland2/400/160" alt="Iceland South Coast">
+              <div class="trip-card-footer">
+                <div class="trip-card-text">
+                  <div class="trip-card-name">Iceland South Coast</div>
+                  <div class="trip-card-time">Just now</div>
+                </div>
+                <div class="avatar-stack">
+                  <img class="avatar avatar--front" src="https://picsum.photos/seed/33/26/26" alt="">
+                  <img class="avatar" src="https://picsum.photos/seed/44/26/26" alt="">
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /home-overlay-content -->
+    </div><!-- /home-overlay -->
 
   </div><!-- /stage -->
 

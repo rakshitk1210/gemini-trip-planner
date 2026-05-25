@@ -165,35 +165,8 @@
         <!-- Scrollable Content Area -->
         <div class="panel-content" id="panelContent">
 
-          <!-- ── Plan AI Pane ── -->
-          <div class="tab-pane" id="paneplanai">
-
-            <div class="ai-bubble-wrap">
-              <div class="ai-bubble">
-                Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.
-              </div>
-            </div>
-
-            <p class="suggestions-intro" id="suggestionsIntro"></p>
-
-            <!-- Category filter chips -->
-            <div class="category-chips" id="categoryChips">
-              <button class="cat-chip cat-chip--active" id="chipAll" onclick="setFilter('all')">All</button>
-              <button class="cat-chip" id="chipScenic" onclick="setFilter('scenic')">
-                <span class="material-symbols-rounded">landscape</span>Scenic
-              </button>
-              <button class="cat-chip" id="chipRestaurant" onclick="setFilter('restaurant')">
-                <span class="material-symbols-rounded">restaurant</span>Food
-              </button>
-              <button class="cat-chip" id="chipHotel" onclick="setFilter('hotel')">
-                <span class="material-symbols-rounded">hotel</span>Hotels
-              </button>
-            </div>
-
-            <!-- Suggestion cards (rendered by JS) -->
-            <div class="suggestions-list" id="suggestionsList"></div>
-
-          </div><!-- /paneplanai -->
+          <!-- ── Plan AI Pane — chat thread (populated by JS) ── -->
+          <div class="tab-pane" id="paneplanai"></div>
 
           <!-- ── Route Pane ── -->
           <div class="tab-pane tab-pane--hidden" id="paneroute">
@@ -283,10 +256,17 @@
 
         <!-- Circle drawing overlay -->
         <svg id="circleOverlay" class="circle-overlay">
+          <defs>
+            <path id="svgArcPath" fill="none"/>
+          </defs>
           <circle id="svgCircle" class="svg-circle" cx="0" cy="0" r="0"/>
+          <line id="svgRadiusLine" class="svg-radius-line" x1="0" y1="0" x2="0" y2="0"/>
+          <text id="svgArcLabel" class="svg-arc-label">
+            <textPath id="svgArcText" href="#svgArcPath" startOffset="50%" text-anchor="middle"></textPath>
+          </text>
+          <circle id="svgCenterDot" class="svg-handle-dot" r="6"/>
+          <circle id="svgEdgeDot" class="svg-handle-dot" r="6"/>
         </svg>
-        <!-- Floating distance label -->
-        <div class="circle-label" id="circleLabel"></div>
         <!-- Remove circle button -->
         <button class="circle-remove-btn" id="circleRemoveBtn" onclick="removeCircle()">
           <span class="material-symbols-rounded">close</span>
