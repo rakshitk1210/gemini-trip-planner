@@ -10,7 +10,7 @@ export default function PanelFooter() {
 
   const placeholder = activeCircle
     ? 'Find things in this area…'
-    : 'Ask about your trip...';
+    : 'Show me hotels along my route';
 
   function handleSend() {
     if (!text.trim() && !activeCircle) return;
@@ -45,7 +45,6 @@ export default function PanelFooter() {
           </button>
         </div>
       </div>
-      <p className="footer-disclaimer">Gemini can make mistakes</p>
     </div>
   );
 }

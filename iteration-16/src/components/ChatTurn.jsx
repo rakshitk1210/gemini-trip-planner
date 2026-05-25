@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
-import GeminiIcon from './GeminiIcon.jsx';
 import SuggestionCard from './SuggestionCard.jsx';
 import useAppStore from '../store/useAppStore.js';
 
@@ -7,9 +6,9 @@ const WORDS_PER_MS = 36;
 
 function CardList({ cards, moreLabel = 'more places' }) {
   const [expanded, setExpanded] = useState(false);
-  const limit   = 5;
-  const shown   = cards.slice(0, limit);
-  const hidden  = cards.slice(limit);
+  const limit  = 5;
+  const shown  = cards.slice(0, limit);
+  const hidden = cards.slice(limit);
 
   return (
     <div className="chat-card-list">
@@ -53,13 +52,11 @@ const ChatTurn = memo(function ChatTurn({ turn }) {
   const prevThinkingRef = useRef(isThinking);
 
   useEffect(() => {
-    // Kick off typewriter only when isThinking flips false → true was never the case,
-    // so we fire when it goes true → false
     if (prevThinkingRef.current && !isThinking && (aiText || error)) {
       prevThinkingRef.current = false;
       if (error) { setDisplayedText(''); setTextDone(true); return; }
-      const words  = aiText.split(' ');
-      let   i      = 0;
+      const words = aiText.split(' ');
+      let i = 0;
       setDisplayedText('');
       const tick = () => {
         if (i < words.length) {
@@ -76,21 +73,31 @@ const ChatTurn = memo(function ChatTurn({ turn }) {
 
   return (
     <div className="chat-turn">
-      {userText && <div className="chat-bubble--user">{userText}</div>}
-      <div className="chat-bubble-ai-wrap">
-        <div className="chat-gemini-icon"><GeminiIcon size={20} /></div>
-        <div className="chat-bubble--ai">
-          {isThinking ? (
-            <div className="chat-thinking"><span /><span /><span /></div>
-          ) : error ? (
-            <span style={{ color: '#ea4335' }}>{error}</span>
-          ) : (
-            displayedText
-          )}
+      {/* User prompt → gray rounded info card */}
+      {userText && (
+        <div className="trip-info-card">
+          <p className="trip-info-text">{userText}</p>
         </div>
-      </div>
+      )}
+
+      {/* AI response → plain summary text */}
+      {isThinking ? (
+        <div className="chat-thinking-wrap">
+          <div className="chat-thinking"><span /><span /><span /></div>
+        </div>
+      ) : error ? (
+        <p className="trip-summary-text" style={{ color: '#ea4335' }}>{error}</p>
+      ) : displayedText ? (
+        <p className={`trip-summary-text${!textDone ? ' is-typing' : ''}`}>
+          {displayedText}
+        </p>
+      ) : null}
+
+      {/* Category filter chips */}
       {textDone && chips?.length > 0 && <ChipRow chips={chips} turnId={id} />}
-      {textDone && cards?.length > 0  && <CardList cards={cards} moreLabel={moreLabel} />}
+
+      {/* Suggestion cards — bleed to panel edges */}
+      {textDone && cards?.length > 0 && <CardList cards={cards} moreLabel={moreLabel} />}
     </div>
   );
 });

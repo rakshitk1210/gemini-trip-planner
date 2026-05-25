@@ -26,18 +26,22 @@ export default function PromptCard() {
           ref={promptRef}
           onKeyDown={handleKeyDown}
         >
-          Iceland 2-day road trip along the Golden Circle and South Coast — geysers, waterfalls, black sand beaches, and volcanic landscapes.
+          Explore Seattle on a 2-day road trip, discovering iconic landmarks, vibrant neighborhoods, and scenic views along the way.
         </p>
       </div>
       <div className="prompt-actions">
         <div className="prompt-actions-left">
-          <span className="material-symbols-rounded prompt-add-icon">add</span>
+          <svg className="prompt-add-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M18 13H13V18C13 18.55 12.55 19 12 19C11.45 19 11 18.55 11 18V13H6C5.45 13 5 12.55 5 12C5 11.45 5.45 11 6 11H11V6C11 5.45 11.45 5 12 5C12.55 5 13 5.45 13 6V11H18C18.55 11 19 11.45 19 12C19 12.55 18.55 13 18 13Z" fill="#5F6368"/>
+          </svg>
           <VehicleSelector />
         </div>
         <div className="prompt-actions-right">
           <span className="prompt-model-label">Gemini 3.1 Pro</span>
           <button className="prompt-send-btn" onClick={handleSend}>
-            <span className="material-symbols-rounded">arrow_forward</span>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M13.4779 10.834H3.33203V9.16732H13.4779L8.8112 4.50065L9.9987 3.33398L16.6654 10.0007L9.9987 16.6673L8.8112 15.5007L13.4779 10.834Z" fill="white"/>
+            </svg>
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { callGemini } from '../api/gemini.js';
+import { callClaude } from '../api/gemini.js';
 import { SUGGESTIONS, haversineKm } from '../constants.js';
 
 let turnIdCounter = 0;
@@ -23,37 +23,96 @@ function bestInsertIndex(stops, newStop) {
   return bestIdx;
 }
 
-// Convert circle pixel coords to lat/lng context string
-function circleToLocationCtx(circle, mapInstance) {
-  if (!circle || !mapInstance) return '';
+// 2-opt: repeatedly reverse segments that reduce total open-path distance.
+// Eliminates crossing edges that greedy insertion can introduce.
+function twoOpt(stops) {
+  if (stops.length < 4) return stops;
+  let route = [...stops];
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let i = 0; i < route.length - 2; i++) {
+      for (let k = i + 2; k < route.length; k++) {
+        const d1 = haversineKm(route[i], route[i + 1])
+                 + (k + 1 < route.length ? haversineKm(route[k], route[k + 1]) : 0);
+        const d2 = haversineKm(route[i], route[k])
+                 + (k + 1 < route.length ? haversineKm(route[i + 1], route[k + 1]) : 0);
+        if (d2 < d1 - 0.001) {
+          route = [
+            ...route.slice(0, i + 1),
+            ...route.slice(i + 1, k + 1).reverse(),
+            ...route.slice(k + 1),
+          ];
+          improved = true;
+        }
+      }
+    }
+  }
+  return route;
+}
+
+function circleCenter(circle, mapInstance) {
+  if (!circle || !mapInstance) return null;
   try {
     const proj   = mapInstance.getProjection();
     const bounds = mapInstance.getBounds();
-    if (!proj || !bounds) return '';
+    if (!proj || !bounds) return null;
     const mapDiv = document.getElementById('mapArea');
-    if (!mapDiv) return '';
+    if (!mapDiv) return null;
     const w = mapDiv.offsetWidth, h = mapDiv.offsetHeight;
     const ne = bounds.getNorthEast(), sw = bounds.getSouthWest();
     const nePt = proj.fromLatLngToPoint(ne), swPt = proj.fromLatLngToPoint(sw);
     const wx = swPt.x + (circle.cx / w) * (nePt.x - swPt.x);
     const wy = nePt.y + (circle.cy / h) * (swPt.y - nePt.y);
-    const centre = proj.fromPointToLatLng(new google.maps.Point(wx, wy));
-    return ` The user has drawn a search circle centred at ${centre.lat().toFixed(4)}°N, ${centre.lng().toFixed(4)}°E with a radius of ${circle.radiusKm.toFixed(1)} km. Return places within that circle.`;
-  } catch { return ''; }
+    const ll  = proj.fromPointToLatLng(new google.maps.Point(wx, wy));
+    return { lat: ll.lat(), lng: ll.lng() };
+  } catch { return null; }
+}
+
+// Returns a human-readable anchor name for the circle center.
+// Tries reverse geocoding first, then falls back to nearest existing pin.
+async function getAnchorName(center, routeStops, aiPlaces) {
+  if (!center) return null;
+
+  try {
+    const response = await new google.maps.Geocoder().geocode({ location: center });
+    const components = response.results?.[0]?.address_components ?? [];
+    for (const type of ['locality', 'sublocality_level_1', 'administrative_area_level_2', 'administrative_area_level_1']) {
+      const comp = components.find(c => c.types.includes(type));
+      if (comp) {
+        const country = components.find(c => c.types.includes('country'));
+        return country ? `${comp.long_name}, ${country.long_name}` : comp.long_name;
+      }
+    }
+  } catch { /* fall through to pin fallback */ }
+
+  const allPins = [...routeStops, ...aiPlaces];
+  if (!allPins.length) return null;
+  let nearest = null, minDist = Infinity;
+  for (const pin of allPins) {
+    const d = haversineKm(center, pin);
+    if (d < minDist) { minDist = d; nearest = pin; }
+  }
+  return nearest?.name ?? null;
 }
 
 const useAppStore = create((set, get) => ({
   // ── Screen
   screen:    'home',
   activeTab: 'plan-ai',
+  tripName:  '',
 
   showTab(tab) {
     set({ activeTab: tab });
   },
 
+  goHome() {
+    set({ screen: 'home' });
+  },
+
   async goToMap(promptText) {
     const text = promptText || 'Plan me a road trip';
-    set({ screen: 'map', activeTab: 'plan-ai' });
+    set({ screen: 'map', activeTab: 'plan-ai', tripName: text });
 
     const turnId = nextId();
     set(s => ({
@@ -68,12 +127,12 @@ const useAppStore = create((set, get) => ({
 
     let places;
     try {
-      places = await callGemini([{ role: 'user', text }]);
+      places = await callClaude([{ role: 'user', text }]);
     } catch (err) {
-      console.error('Gemini error:', err);
+      console.error('Claude error:', err);
       set(s => ({
         chatTurns: s.chatTurns.map(t => t.id === turnId
-          ? { ...t, isThinking: false, error: "Couldn't reach Gemini — showing sample places." }
+          ? { ...t, isThinking: false, error: "Couldn't reach Claude — showing sample places." }
           : t),
         aiPlaces: SUGGESTIONS,
       }));
@@ -95,7 +154,7 @@ const useAppStore = create((set, get) => ({
     set(s => ({
       aiPlaces:            places,
       activeFilter:        scenic.length ? 'scenic' : 'all',
-      conversationHistory: [...s.conversationHistory, { role: 'model', text: JSON.stringify(places) }],
+      conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
       chatTurns: s.chatTurns.map(t => t.id === turnId
         ? { ...t, isThinking: false, aiText: mainText, cards: mainCards, chips, moreLabel: scenic.length ? 'more scenic spots' : 'more places' }
         : t),
@@ -129,14 +188,14 @@ const useAppStore = create((set, get) => ({
 
     let places;
     try {
-      places = await callGemini(get().conversationHistory);
+      places = await callClaude(get().conversationHistory);
     } catch (err) {
-      console.error('Gemini error:', err);
+      console.error('Claude error:', err);
       set(s => ({
         isThinking: false,
         conversationHistory: s.conversationHistory.slice(0, -1),
         chatTurns: s.chatTurns.map(t => t.id === turnId
-          ? { ...t, isThinking: false, error: "Couldn't reach Gemini — try again." }
+          ? { ...t, isThinking: false, error: "Couldn't reach Claude — try again." }
           : t),
       }));
       return;
@@ -144,8 +203,10 @@ const useAppStore = create((set, get) => ({
 
     set(s => ({
       isThinking: false,
-      aiPlaces:   [...s.aiPlaces, ...places],
-      conversationHistory: [...s.conversationHistory, { role: 'model', text: JSON.stringify(places) }],
+      // Replace map pins with this query's results — route stops & saved places persist in their own state
+      aiPlaces:     places,
+      activeFilter: 'all',
+      conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
       chatTurns: s.chatTurns.map(t => t.id === turnId
         ? { ...t, isThinking: false, aiText: `Here are ${places.length} places for you`, cards: places, moreLabel: 'more places' }
         : t),
@@ -153,9 +214,19 @@ const useAppStore = create((set, get) => ({
   },
 
   async doAreaSearch(userPrompt) {
-    const { activeCircle, mapInstance } = get();
-    const locationCtx = circleToLocationCtx(activeCircle, mapInstance);
-    const fullPrompt  = userPrompt + locationCtx;
+    const { activeCircle, mapInstance, aiPlaces, routeStops } = get();
+    const center = circleCenter(activeCircle, mapInstance);
+    const r      = activeCircle?.radiusKm ?? 0;
+    const rLabel = `${r.toFixed(1)} km`;
+
+    // Reverse-geocode the circle center to get a real place name for Claude
+    const anchor = await getAnchorName(center, routeStops, aiPlaces);
+    const locationCtx = anchor
+      ? ` near ${anchor}, within ${rLabel}. Only return places actually located near ${anchor}.`
+      : center
+      ? ` within ${rLabel} of ${center.lat.toFixed(3)}°N, ${center.lng.toFixed(3)}°E.`
+      : '';
+    const fullPrompt = userPrompt + locationCtx;
 
     const turnId = nextId();
     set(s => ({
@@ -169,26 +240,41 @@ const useAppStore = create((set, get) => ({
 
     let places;
     try {
-      places = await callGemini(get().conversationHistory);
+      places = await callClaude(get().conversationHistory);
     } catch (err) {
-      console.error('Gemini error:', err);
+      console.error('Claude error:', err);
       set(s => ({
         isThinking: false,
         conversationHistory: s.conversationHistory.slice(0, -1),
         chatTurns: s.chatTurns.map(t => t.id === turnId
-          ? { ...t, isThinking: false, error: "Couldn't reach Gemini — try again." }
+          ? { ...t, isThinking: false, error: "Couldn't reach Claude — try again." }
           : t),
       }));
       return;
     }
 
-    const radiusStr = activeCircle ? `${activeCircle.radiusKm.toFixed(1)} km` : 'the area';
+    let resultLabel = '';
+    if (center) {
+      const inside = places.filter(p => haversineKm(center, p) <= r * 1.15);
+      if (inside.length > 0) {
+        places      = inside;
+        resultLabel = `${places.length} suggestion${places.length !== 1 ? 's' : ''} within ${rLabel}`;
+      } else {
+        places      = [...places].sort((a, b) => haversineKm(center, a) - haversineKm(center, b)).slice(0, 5);
+        resultLabel = `${places.length} nearby suggestion${places.length !== 1 ? 's' : ''} (nearest to your area)`;
+      }
+    } else {
+      resultLabel = `${places.length} suggestion${places.length !== 1 ? 's' : ''} in the area`;
+    }
+
     set(s => ({
       isThinking: false,
-      aiPlaces:   [...s.aiPlaces, ...places],
-      conversationHistory: [...s.conversationHistory, { role: 'model', text: JSON.stringify(places) }],
+      // Replace map pins with this query's results — route stops & saved places persist in their own state
+      aiPlaces:     places,
+      activeFilter: 'all',
+      conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
       chatTurns: s.chatTurns.map(t => t.id === turnId
-        ? { ...t, isThinking: false, aiText: `${places.length} suggestions within ${radiusStr}`, cards: places, moreLabel: 'more places' }
+        ? { ...t, isThinking: false, aiText: resultLabel, cards: places, moreLabel: 'more places' }
         : t),
     }));
   },
@@ -221,14 +307,17 @@ const useAppStore = create((set, get) => ({
   routeStops: [],
 
   addToRoute(suggId, insertAt) {
-    const { routeStops, aiPlaces } = get();
+    const { routeStops, aiPlaces, chatTurns } = get();
     if (routeStops.find(s => s.id === suggId)) return;
-    const sugg = allPlaces(aiPlaces).find(s => s.id === suggId);
+    // Search current AI places first; fall back to any card from previous chat turns
+    // (needed because aiPlaces is replaced on each new query but old chat cards stay visible)
+    const pool = [...allPlaces(aiPlaces), ...chatTurns.flatMap(t => t.cards ?? [])];
+    const sugg = pool.find(s => s.id === suggId);
     if (!sugg) return;
     const idx = insertAt !== undefined ? Math.min(insertAt, routeStops.length) : bestInsertIndex(routeStops, sugg);
     const next = [...routeStops];
     next.splice(idx, 0, { ...sugg });
-    set({ routeStops: next });
+    set({ routeStops: twoOpt(next) });
   },
 
   removeStop(id) {

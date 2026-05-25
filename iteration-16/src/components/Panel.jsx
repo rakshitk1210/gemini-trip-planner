@@ -9,6 +9,8 @@ export default function Panel() {
   const showTab        = useAppStore(s => s.showTab);
   const draggingSuggId = useAppStore(s => s.draggingSuggId);
   const addToRoute     = useAppStore(s => s.addToRoute);
+  const tripName       = useAppStore(s => s.tripName);
+  const goHome         = useAppStore(s => s.goHome);
 
   function onRouteTabDragOver(e) {
     e.preventDefault();
@@ -17,13 +19,19 @@ export default function Panel() {
 
   return (
     <div className="panel">
+      <div className="trip-header">
+        <button className="trip-back-btn" onClick={goHome} title="Back">
+          <span className="material-symbols-rounded">arrow_back</span>
+        </button>
+        <span className="trip-header-title">{tripName || 'My trip'}</span>
+      </div>
       <div className="tab-bar">
         <button
           className={`tab-btn${activeTab === 'plan-ai' ? ' tab-btn--active' : ''}`}
           id="tabPlanAiBtn"
           onClick={() => showTab('plan-ai')}
         >
-          Plan AI
+          Plan with AI
         </button>
         <button
           className={`tab-btn${activeTab === 'route' ? ' tab-btn--active' : ''}`}

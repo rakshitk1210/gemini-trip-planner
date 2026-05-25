@@ -2,11 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "iteration-15",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["serve.sh"],
-      "port": 3015,
-      "autoPort": true
+      "name": "iteration-16",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/tmp/vite-runner.cjs", "--port", "3016", "--host"],
+      "port": 3016
     }
   ]
 }

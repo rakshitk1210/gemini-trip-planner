@@ -81,7 +81,7 @@ html, body { height: 100%; overflow: hidden; }
 
 body {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 1fr;
   height: 100vh;
   font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
   background: #f8f9fa;
@@ -95,8 +95,7 @@ body {
 .rail {
   width: 64px;
   height: 100vh;
-  background: white;
-  border-right: 1px solid #e8eaed;
+  background: #f8f9fa;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -130,7 +129,7 @@ body {
 }
 .rail-item:hover { background: #f1f3f4; color: #202124; }
 .rail-item .material-symbols-rounded { font-size: 22px; }
-.rail-label { font-size: 9px; font-weight: 500; letter-spacing: 0.3px; white-space: nowrap; color: inherit; }
+.rail-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1375px; white-space: nowrap; color: inherit; }
 
 /* ══════════════════════════════════════════
    STAGE
@@ -149,7 +148,7 @@ body {
 .home-screen {
   display: none;
   height: 100%;
-  background: #f8f9fa;
+  background: white;
   overflow-y: auto;
   position: relative;
 }
@@ -157,26 +156,58 @@ body[data-state="home"] .home-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
 .home-content {
-  width: 600px;
+  width: 720px;
   max-width: calc(100% - 48px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 64px;
+  gap: 36px;
+  padding: 64px 0;
 }
 
 .home-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 46px;
-  padding: 120px 0 60px;
-  border-bottom: 1px solid #e8eaed;
+  gap: 32px;
 }
 
+/* home-greeting / home-avatar — used by HomeScreen.jsx */
+.home-greeting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.home-avatar {
+  width: 64px; height: 64px;
+  background: #f8f9fa;
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.home-avatar-img {
+  width: 56px;
+  height: 56px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.home-heading-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* legacy names kept so old code doesn't break */
 .hero-heading-group {
   display: flex;
   flex-direction: column;
@@ -186,11 +217,11 @@ body[data-state="home"] .home-screen {
 }
 
 .gemini-logo-wrap {
-  width: 48px; height: 48px;
-  background: white;
-  border-radius: 135px;
+  width: 64px; height: 64px;
+  background: #f8f9fa;
+  border-radius: 24px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 3px rgba(60,64,67,0.15);
+  overflow: hidden;
 }
 
 .home-heading {
@@ -199,31 +230,39 @@ body[data-state="home"] .home-screen {
   font-weight: 500;
   color: #202124;
   text-align: center;
-  line-height: 1.1;
-  letter-spacing: -0.72px;
+  line-height: 44px;
+  letter-spacing: -1.08px;
+  white-space: nowrap;
 }
 
 .prompt-card {
   width: 100%;
   background: white;
-  border: 1px solid #7cb0f5;
-  border-radius: 16px;
+  border-radius: 20px;
+  box-shadow:
+    0 0 8px 0 rgba(218, 232, 254, 0.6),
+    inset 0 0 0 2px rgba(218, 232, 254, 0.5);
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.prompt-body { padding: 12px; }
+.prompt-body { padding: 16px; }
 
 .prompt-text {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
   color: #202124;
-  line-height: 24px;
+  line-height: 26px;
+  outline: none;
 }
 
 .prompt-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 4px 4px 12px;
+  padding: 0 8px 12px 16px;
 }
 
 .prompt-actions-left {
@@ -333,6 +372,7 @@ body[data-state="home"] .home-screen {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-right: 4px;
 }
 
 .prompt-model-label {
@@ -356,77 +396,142 @@ body[data-state="home"] .home-screen {
 .home-trips {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  padding-top: 24px;
+  width: 100%;
 }
 
-.planned-trips-heading {
+.home-trips-heading {
   font-family: 'Google Sans', Arial, sans-serif;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 500;
   color: #202124;
-  line-height: 26px;
+  line-height: 28px;
 }
 
-.trips-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* legacy alias */
+.planned-trips-heading {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #202124;
+  line-height: 28px;
+}
+
+.home-trips-row {
+  display: flex;
   gap: 10px;
+  width: 100%;
+}
+
+/* legacy alias */
+.trips-grid {
+  display: flex;
+  gap: 10px;
+  width: 100%;
 }
 
 .trip-card {
+  flex: 1;
+  min-width: 0;
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   cursor: pointer;
+  box-shadow: 0 0 2px 0 rgba(0,0,0,0.12);
   transition: box-shadow 0.2s;
 }
-.trip-card:hover { box-shadow: 0 4px 12px rgba(26,115,232,0.12); }
+.trip-card:hover { box-shadow: 0 2px 8px 0 rgba(0,0,0,0.16); }
 
-.trip-card-img {
+.trip-card-img-wrap {
+  position: relative;
   width: 100%;
   height: 160px;
-  object-fit: cover;
   border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.trip-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-.trip-card-footer {
+.trip-card-info {
   display: flex;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
 }
 
-.trip-card-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #202124;
-  line-height: 20px;
+/* legacy alias */
+.trip-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.trip-card-time {
-  font-size: 11px;
+.trip-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.trip-card-name {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #202124;
+  line-height: 24px;
+}
+
+.trip-card-meta {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
   color: #9aa0a6;
   line-height: 16px;
 }
 
-.avatar-stack { display: flex; align-items: center; flex-shrink: 0; }
-
-.avatar {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  border: 1px solid white;
-  object-fit: cover;
-  display: block;
+/* legacy alias */
+.trip-card-time {
+  font-size: 12px;
+  color: #9aa0a6;
+  line-height: 16px;
 }
 
-.avatar--front {
-  margin-right: -13px;
-  z-index: 2;
+.trip-card-thumbs {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.trip-card-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid white;
+  overflow: hidden;
+  background: #f8f9fa;
+  flex-shrink: 0;
   position: relative;
 }
+.trip-card-thumb:first-child { margin-right: -13px; z-index: 2; }
+.trip-card-thumb:last-child  { z-index: 1; }
+.trip-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* legacy avatar classes */
+.avatar-stack { display: flex; align-items: center; flex-shrink: 0; }
+.avatar { width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; object-fit: cover; display: block; }
+.avatar--front { margin-right: -13px; z-index: 2; position: relative; }
 
 .home-disclaimer {
   position: absolute;
@@ -446,23 +551,66 @@ body[data-state="home"] .home-screen {
 
 .map-view {
   display: none;
+  position: relative;
   height: 100%;
 }
 body[data-state="plan-ai"] .map-view,
 body[data-state="route"] .map-view {
-  display: flex;
+  display: block;
 }
 
-/* ── Left Panel ── */
+/* ── Left Panel (floating card over map) ── */
 .panel {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 360px;
-  flex-shrink: 0;
-  height: 100%;
+  height: calc(100vh - 32px);
   background: white;
   display: flex;
   flex-direction: column;
   z-index: 10;
-  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.14);
+}
+
+/* ── Trip Header (back arrow + name) ── */
+.trip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px 8px;
+  background: white;
+  flex-shrink: 0;
+}
+
+.trip-back-btn {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none;
+  cursor: pointer;
+  color: #202124;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.trip-back-btn:hover { background: #f1f3f4; }
+.trip-back-btn .material-symbols-rounded { font-size: 20px; }
+
+.trip-header-title {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #202124;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── Tab Bar ── */
@@ -539,6 +687,36 @@ body[data-state="route"] .map-view {
 /* Separate turns with a very subtle border */
 .chat-turn + .chat-turn {
   border-top: 1px solid #f1f3f4;
+}
+
+/* Trip info card — gray rounded box showing the user's prompt */
+.trip-info-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.trip-info-text {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #202124;
+}
+
+/* AI summary text — plain paragraph below info card */
+.trip-summary-text {
+  font-family: 'Google Sans', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #202124;
+}
+
+/* Thinking state wrapper */
+.chat-thinking-wrap {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
 }
 
 /* User bubble — right-aligned */
@@ -769,8 +947,8 @@ body[data-state="route"] .map-view {
 .suggestion-card-name {
   font-size: 16px;
   font-weight: 500;
-  color: #1d1b20;
-  line-height: 22px;
+  color: #202124;
+  line-height: 24px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -822,8 +1000,8 @@ body[data-state="route"] .map-view {
 .sugg-save-btn--saved { color: #1a73e8; }
 .sugg-save-btn--saved:hover { background: #e8f0fe; }
 
-/* Route add button — color.action.suggestionAdd (#F4FBFC) always visible */
-.sugg-route-btn { color: #1a73e8; background: #F4FBFC; }
+/* Route add button — color.action.suggestionAdd (#F4FBFC) always visible, 32px per Figma */
+.sugg-route-btn { color: #1a73e8; background: #F4FBFC; width: 32px; height: 32px; }
 .sugg-route-btn:hover { background: #e0f4f7; }
 
 /* Route added state */
@@ -1084,7 +1262,6 @@ body[data-state="route"] .map-view {
   bottom: 0; left: 0; right: 0;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(2px);
-  border-top: 1px solid #e8eaed;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -1101,7 +1278,7 @@ body[data-state="route"] .map-view {
   display: flex;
   align-items: center;
   background: white;
-  border: 1.5px solid #1a73e8;
+  border: 1px solid #dadce0;
   border-radius: 12px;
   height: 48px;
   padding: 0 4px 0 12px;
@@ -1138,12 +1315,11 @@ body[data-state="route"] .map-view {
   line-height: 16px;
 }
 
-/* ── Map Area ── */
+/* ── Map Area (full-bleed behind floating panel) ── */
 .map-area {
-  flex: 1;
-  position: relative;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  min-width: 0;
 }
 
 #map {

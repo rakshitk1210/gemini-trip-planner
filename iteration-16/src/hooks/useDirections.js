@@ -14,6 +14,22 @@ function drawStraightPolyline(map, stops) {
   });
 }
 
+function animatePolyline(map, fullPath, polyRef) {
+  polyRef.current = new google.maps.Polyline({
+    path: [fullPath[0]], strokeColor: '#1a73e8', strokeWeight: 3, strokeOpacity: 0.9, map, zIndex: 5,
+  });
+  const chunkSize = Math.max(1, Math.ceil(fullPath.length / 80));
+  let i = 1;
+  const extend = () => {
+    if (!polyRef.current) return;
+    for (let j = 0; j < chunkSize && i < fullPath.length; j++, i++) {
+      polyRef.current.getPath().push(fullPath[i]);
+    }
+    if (i < fullPath.length) setTimeout(extend, 16);
+  };
+  setTimeout(extend, 100);
+}
+
 export default function useDirections() {
   const map        = useMap();
   const routeStops = useAppStore(s => s.routeStops);
@@ -23,35 +39,32 @@ export default function useDirections() {
     if (polyRef.current) { polyRef.current.setMap(null); polyRef.current = null; }
     if (!map || routeStops.length < 2) return;
 
-    const svc = new google.maps.DirectionsService();
-    svc.route({
-      origin:      { lat: routeStops[0].lat, lng: routeStops[0].lng },
-      destination: { lat: routeStops[routeStops.length - 1].lat, lng: routeStops[routeStops.length - 1].lng },
-      waypoints:   routeStops.slice(1, -1).map(s => ({ location: { lat: s.lat, lng: s.lng }, stopover: true })),
-      travelMode:  google.maps.TravelMode.DRIVING,
-      optimizeWaypoints: false,
-    }, (result, status) => {
-      if (status !== 'OK') {
-        console.warn('DirectionsService:', status);
-        polyRef.current = drawStraightPolyline(map, routeStops);
-        return;
-      }
-      const fullPath = result.routes[0].overview_path;
-      polyRef.current = new google.maps.Polyline({
-        path: [fullPath[0]], strokeColor: '#1a73e8', strokeWeight: 3, strokeOpacity: 0.9, map, zIndex: 5,
-      });
-      // Animate the polyline drawing
-      const chunkSize = Math.max(1, Math.ceil(fullPath.length / 80));
-      let i = 1;
-      const extend = () => {
-        if (!polyRef.current) return;
-        for (let j = 0; j < chunkSize && i < fullPath.length; j++, i++) {
-          polyRef.current.getPath().push(fullPath[i]);
+    const svc      = new google.maps.DirectionsService();
+    const origin   = new google.maps.LatLng(routeStops[0].lat, routeStops[0].lng);
+    const dest     = new google.maps.LatLng(routeStops[routeStops.length - 1].lat, routeStops[routeStops.length - 1].lng);
+    const waypoints = routeStops.slice(1, -1).map(s => ({
+      location: new google.maps.LatLng(s.lat, s.lng), stopover: true,
+    }));
+
+    const baseRequest = { origin, destination: dest, waypoints, optimizeWaypoints: false, avoidFerries: false };
+
+    const tryMode = (mode, onFail) => {
+      svc.route({ ...baseRequest, travelMode: mode }, (result, status) => {
+        if (status === 'OK') {
+          animatePolyline(map, result.routes[0].overview_path, polyRef);
+        } else {
+          console.warn(`DirectionsService ${mode} failed (${status}):`, routeStops.map(s => `${s.name} (${s.lat.toFixed(3)},${s.lng.toFixed(3)})`));
+          onFail();
         }
-        if (i < fullPath.length) setTimeout(extend, 16);
-      };
-      setTimeout(extend, 100);
-    });
+      });
+    };
+
+    // Try DRIVING → fallback WALKING → fallback straight line
+    tryMode(google.maps.TravelMode.DRIVING, () =>
+      tryMode(google.maps.TravelMode.WALKING, () => {
+        polyRef.current = drawStraightPolyline(map, routeStops);
+      })
+    );
 
     return () => { polyRef.current?.setMap(null); polyRef.current = null; };
   }, [map, routeStops]);

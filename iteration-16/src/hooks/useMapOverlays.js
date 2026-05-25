@@ -68,9 +68,6 @@ function initClasses() {
       const el = document.createElement('div');
       el.className = 'square-pin suggestion-pin';
       el.innerHTML = `
-        <div class="sugg-pin-badge sugg-pin-badge--${s.category}">
-          <span class="material-symbols-rounded">${CAT_ICONS[s.category]}</span>
-        </div>
         <div class="square-pin-shell">
           <img class="square-pin-photo" src="${getImg(this.placeImages, s.name, s.seed, 'thumb')}" alt="">
         </div>

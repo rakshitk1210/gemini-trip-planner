@@ -30,9 +30,6 @@ export default function MapToolbar() {
           <span className="material-symbols-rounded">architecture</span>
         </button>
         <button className="toolbar-tool-btn">
-          <span className="material-symbols-rounded">wrap_text</span>
-        </button>
-        <button className="toolbar-tool-btn">
           <span className="material-symbols-rounded">mode_comment</span>
         </button>
       </div>

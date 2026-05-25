@@ -1,53 +1,73 @@
 import React from 'react';
-import GeminiIcon from './GeminiIcon.jsx';
 import PromptCard from './PromptCard.jsx';
 import useAppStore from '../store/useAppStore.js';
 
 const TRIPS = [
-  { seed: 'iceland1', name: 'Iceland Golden Circle', time: 'Just now', avatars: ['11', '22'] },
-  { seed: 'iceland2', name: 'Iceland South Coast',   time: 'Just now', avatars: ['33', '44'] },
+  { id: 'iceland',    name: 'Ring Road, Iceland',         meta: '12-hour drive • 800 miles', img: '/trip-iceland.jpg'    },
+  { id: 'amalfi',    name: 'Amalfi Coast, Italy',         meta: '3-hour drive • 90 miles',   img: '/trip-amalfi.jpg'    },
+  { id: 'garden',    name: 'Garden Route, South Africa',  meta: '5-hour drive • 200 miles',  img: '/trip-garden.jpg'    },
+  { id: 'oceanroad', name: 'Great Ocean Road, Australia', meta: '8-hour drive • 450 miles',  img: '/trip-oceanroad.jpg' },
 ];
 
 export default function HomeScreen() {
   const goToMap = useAppStore(s => s.goToMap);
 
   return (
-    <main className="home-screen" id="homeScreen">
+    <div className="home-screen">
       <div className="home-content">
 
-        <section className="home-hero">
-          <div className="hero-heading-group">
-            <div className="gemini-logo-wrap">
-              <GeminiIcon size={28} />
+        {/* User greeting + prompt card */}
+        <div className="home-hero">
+          <div className="home-greeting">
+            <img src="/user-avatar.svg" alt="User avatar" className="home-avatar-img" />
+            <div className="home-heading-wrap">
+              <h1 className="home-heading">Hi Rakshit. Where are you headed?</h1>
             </div>
-            <h1 className="home-heading">Hey Rakshit, where are you planning to go on your road trip?</h1>
           </div>
           <PromptCard />
-        </section>
+        </div>
 
-        <section className="home-trips">
-          <h2 className="planned-trips-heading">Planned roadtrips</h2>
-          <div className="trips-grid">
-            {TRIPS.map(trip => (
-              <div key={trip.seed} className="trip-card" onClick={() => goToMap()}>
-                <img className="trip-card-img" src={`https://picsum.photos/seed/${trip.seed}/271/160`} alt={trip.name} />
-                <div className="trip-card-footer">
-                  <div className="trip-card-text">
-                    <div className="trip-card-name">{trip.name}</div>
-                    <div className="trip-card-time">{trip.time}</div>
-                  </div>
-                  <div className="avatar-stack">
-                    <img className="avatar avatar--front" src={`https://picsum.photos/seed/${trip.avatars[0]}/26/26`} alt="" />
-                    <img className="avatar" src={`https://picsum.photos/seed/${trip.avatars[1]}/26/26`} alt="" />
-                  </div>
-                </div>
-              </div>
+        {/* Road trip idea cards */}
+        <div className="home-trips">
+          <p className="home-trips-heading">Road trip ideas</p>
+          <div className="home-trips-row">
+            {TRIPS.slice(0, 2).map(trip => (
+              <TripCard key={trip.id} trip={trip} onClick={goToMap} />
             ))}
           </div>
-        </section>
+          <div className="home-trips-row">
+            {TRIPS.slice(2).map(trip => (
+              <TripCard key={trip.id} trip={trip} onClick={goToMap} />
+            ))}
+          </div>
+        </div>
 
       </div>
-      <div className="home-disclaimer">Gemini can make mistakes</div>
-    </main>
+      <p className="home-disclaimer">Gemini can make mistakes</p>
+    </div>
+  );
+}
+
+function TripCard({ trip, onClick }) {
+  return (
+    <div className="trip-card" onClick={() => onClick()}>
+      <div className="trip-card-img-wrap">
+        <img className="trip-card-img" src={trip.img} alt={trip.name} />
+      </div>
+      <div className="trip-card-info">
+        <div className="trip-card-text">
+          <p className="trip-card-name">{trip.name}</p>
+          <p className="trip-card-meta">{trip.meta}</p>
+        </div>
+        <div className="trip-card-thumbs">
+          <div className="trip-card-thumb">
+            <img src={`https://picsum.photos/seed/${trip.id}a/26/26`} alt="" />
+          </div>
+          <div className="trip-card-thumb">
+            <img src={`https://picsum.photos/seed/${trip.id}b/26/26`} alt="" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

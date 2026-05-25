@@ -7,9 +7,9 @@ export default function GeminiIcon({ size = 28, className = '' }) {
       <defs>
         <linearGradient id="gemGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#4285F4"/>
-          <stop offset="40%"  stopColor="#9C27B0"/>
-          <stop offset="75%"  stopColor="#EA4335"/>
-          <stop offset="100%" stopColor="#FBBC04"/>
+          <stop offset="33%"  stopColor="#34A853"/>
+          <stop offset="66%"  stopColor="#FBBC04"/>
+          <stop offset="100%" stopColor="#EA4335"/>
         </linearGradient>
       </defs>
     </svg>
