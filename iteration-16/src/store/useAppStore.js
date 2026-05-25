@@ -22,6 +22,13 @@ function extractDestination(text) {
   m = t.match(/(?:trip|travel|journey|visit)\s+to\s+(.+?)(?:\s+on\b|\s+in\b|\s+for\b|,|$)/i);
   if (m) return 'Explore ' + toTitleCase(m[1].trim());
 
+  // "road trip along/through/around/in the X [in Y]" — e.g. "Plan a road trip along the Amalfi Coast in Italy"
+  m = t.match(/road\s+trip\s+(?:along|through|around|in|to)\s+(?:the\s+)?([^,]+)/i);
+  if (m) {
+    const dest = m[1].replace(/\s+in\s+[\w\s]+$/i, '').trim();
+    return 'Explore ' + toTitleCase(dest);
+  }
+
   // "X road trip" / "X trip"
   m = t.match(/^(.+?)\s+(?:road\s+)?trip\b/i);
   if (m) return 'Explore ' + toTitleCase(m[1].trim());
