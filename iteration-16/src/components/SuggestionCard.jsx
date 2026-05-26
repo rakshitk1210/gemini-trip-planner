@@ -7,7 +7,8 @@ export default function SuggestionCard({ sugg }) {
   useEffect(() => { const t = setTimeout(() => setVisible(true), 20); return () => clearTimeout(t); }, []);
   const routeStops  = useAppStore(s => s.routeStops);
   const savedPlaces = useAppStore(s => s.savedPlaces);
-  const addToRoute  = useAppStore(s => s.addToRoute);
+  const addToRoute      = useAppStore(s => s.addToRoute);
+  const removeFromRoute = useAppStore(s => s.removeFromRoute);
   const toggleSave  = useAppStore(s => s.toggleSave);
   const placeImages = useAppStore(s => s.placeImages);
   const setDragging  = useAppStore(s => s.setDraggingSuggId);
@@ -57,9 +58,8 @@ export default function SuggestionCard({ sugg }) {
         </button>
         <button
           className={`sugg-icon-btn sugg-route-btn${inRoute ? ' sugg-route-btn--added' : ''}`}
-          title={inRoute ? 'Added to route' : 'Add to route'}
-          disabled={inRoute}
-          onClick={e => { e.stopPropagation(); addToRoute(sugg.id); }}
+          title={inRoute ? 'Remove from route' : 'Add to route'}
+          onClick={e => { e.stopPropagation(); inRoute ? removeFromRoute(sugg.id) : addToRoute(sugg.id); }}
         >
           <span className="material-symbols-rounded">{inRoute ? 'check' : 'add'}</span>
         </button>
