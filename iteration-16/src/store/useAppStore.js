@@ -415,6 +415,15 @@ const useAppStore = create((set, get) => ({
     set({ activeCard: null });
   },
 
+  focusPlace(sugg) {
+    const { mapInstance, openCard } = get();
+    openCard(sugg, null);
+    if (mapInstance && sugg.lat && sugg.lng) {
+      mapInstance.panTo({ lat: sugg.lat, lng: sugg.lng });
+      if (mapInstance.getZoom() < 12) mapInstance.setZoom(12);
+    }
+  },
+
   // ── Circle draw
   drawMode:     false,
   activeCircle: null,

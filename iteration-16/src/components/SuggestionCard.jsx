@@ -10,7 +10,8 @@ export default function SuggestionCard({ sugg }) {
   const addToRoute  = useAppStore(s => s.addToRoute);
   const toggleSave  = useAppStore(s => s.toggleSave);
   const placeImages = useAppStore(s => s.placeImages);
-  const setDragging = useAppStore(s => s.setDraggingSuggId);
+  const setDragging  = useAppStore(s => s.setDraggingSuggId);
+  const focusPlace   = useAppStore(s => s.focusPlace);
 
   const inRoute = !!routeStops.find(s => s.id === sugg.id);
   const isSaved = !!savedPlaces[sugg.id];
@@ -22,6 +23,7 @@ export default function SuggestionCard({ sugg }) {
       className={`suggestion-card${visible ? ' is-visible' : ''}`}
       data-id={sugg.id}
       draggable
+      onClick={() => focusPlace(sugg)}
       onDragStart={e => {
         setDragging(sugg.id);
         e.dataTransfer.effectAllowed = 'copy';
