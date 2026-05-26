@@ -91,6 +91,8 @@ function initClasses() {
       });
       this.el = el;
       this.getPanes().overlayMouseTarget.appendChild(el);
+      // Register element now that it's guaranteed to exist
+      useAppStore.getState().setSuggPinEl(s.id, el);
     }
     draw() {
       if (!this.el) return;
@@ -188,7 +190,6 @@ export default function useMapOverlays() {
         const pin = new _SuggestionPin(sugg, placeImages);
         pin.setMap(map);
         suggPinsRef.current[sugg.id] = pin;
-        useAppStore.getState().setSuggPinEl(sugg.id, pin.el);
         setTimeout(() => {
           pin.fadeIn();
           pin.setVisible(activeFilter === 'all' || activeFilter === sugg.category);
