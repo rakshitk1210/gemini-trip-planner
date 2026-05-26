@@ -4,22 +4,23 @@ import useAppStore from '../store/useAppStore.js';
 
 const WORDS_PER_MS = 36;
 
-function CardList({ cards, moreLabel = 'more places' }) {
+function CardList({ cards }) {
   const [expanded, setExpanded] = useState(false);
-  const limit  = 5;
-  const shown  = cards.slice(0, limit);
-  const hidden = cards.slice(limit);
+  const limit   = 4;
+  const shown   = expanded ? cards : cards.slice(0, limit);
+  const hasMore = cards.length > limit;
 
   return (
     <div className="chat-card-list">
       {shown.map(c => <SuggestionCard key={c.id} sugg={c} />)}
-      {hidden.length > 0 && !expanded && (
-        <button className="chat-show-more" onClick={() => setExpanded(true)}>
-          Show {hidden.length} {moreLabel}
-          <span className="material-symbols-rounded">expand_more</span>
+      {hasMore && (
+        <button className="chat-show-more" onClick={() => setExpanded(e => !e)}>
+          {expanded ? 'Show less' : 'Show all'}
+          <span className="material-symbols-rounded">
+            {expanded ? 'expand_less' : 'expand_more'}
+          </span>
         </button>
       )}
-      {expanded && hidden.map(c => <SuggestionCard key={c.id} sugg={c} />)}
     </div>
   );
 }
@@ -93,11 +94,8 @@ const ChatTurn = memo(function ChatTurn({ turn }) {
         </p>
       ) : null}
 
-      {/* Category filter chips */}
-      {textDone && chips?.length > 0 && <ChipRow chips={chips} turnId={id} />}
-
       {/* Suggestion cards — bleed to panel edges */}
-      {textDone && cards?.length > 0 && <CardList cards={cards} moreLabel={moreLabel} />}
+      {textDone && cards?.length > 0 && <CardList cards={cards} />}
     </div>
   );
 });

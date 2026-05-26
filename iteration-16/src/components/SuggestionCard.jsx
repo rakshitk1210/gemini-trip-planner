@@ -8,7 +8,7 @@ export default function SuggestionCard({ sugg }) {
   const routeStops  = useAppStore(s => s.routeStops);
   const savedPlaces = useAppStore(s => s.savedPlaces);
   const addToRoute      = useAppStore(s => s.addToRoute);
-  const removeFromRoute = useAppStore(s => s.removeFromRoute);
+  const removeFromRoute = useAppStore(s => s.removeStop);
   const toggleSave  = useAppStore(s => s.toggleSave);
   const placeImages = useAppStore(s => s.placeImages);
   const setDragging  = useAppStore(s => s.setDraggingSuggId);

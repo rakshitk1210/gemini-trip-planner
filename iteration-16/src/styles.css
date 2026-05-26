@@ -534,18 +534,6 @@ body[data-state="home"] .home-screen {
 .avatar { width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; object-fit: cover; display: block; }
 .avatar--front { margin-right: -13px; z-index: 2; position: relative; }
 
-.home-disclaimer {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: #9aa0a6;
-  text-align: center;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 /* ══════════════════════════════════════════
    MAP VIEW
 ══════════════════════════════════════════ */
@@ -818,26 +806,25 @@ body[data-state="route"] .map-view {
 }
 /* Suggestion cards inherit all their existing styles */
 
-/* "Show X more" expand button at bottom of card list */
+/* "Show all / Show less" toggle button at bottom of card list */
 .chat-show-more {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 11px 16px;
+  padding: 8px 16px;
   font-family: 'Google Sans', Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1a73e8;
+  font-size: 14px;
+  font-weight: 400;
+  color: #5f6368;
   background: #fff;
   border: none;
-  border-top: 1px solid #e8eaed;
   cursor: pointer;
   transition: background 0.15s;
 }
 .chat-show-more:hover { background: #f8f9fa; }
-.chat-show-more .material-symbols-rounded { font-size: 18px !important; color: #1a73e8; }
+.chat-show-more .material-symbols-rounded { font-size: 18px !important; color: #5f6368; }
 
 /* ── AI Bubble (legacy, kept for safety) ── */
 .ai-bubble-wrap {
@@ -907,11 +894,25 @@ body[data-state="route"] .map-view {
   padding: 10px 12px 10px 16px;
   gap: 12px;
   background: white;
-  border-bottom: 1px solid #e8eaed;
+  position: relative;
   cursor: default;
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 0.3s ease, transform 0.3s ease, background 0.15s;
+}
+/* Indented divider — starts after thumbnail (16px padding + 48px thumb = 64px) */
+.suggestion-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 64px;
+  right: 0;
+  height: 1px;
+  background: #e8eaed;
+}
+/* Last card gets a full-width line to close off the section before the toggle */
+.chat-card-list .suggestion-card:last-child::after {
+  left: 0;
 }
 .suggestion-card.is-visible {
   opacity: 1;
@@ -921,11 +922,8 @@ body[data-state="route"] .map-view {
 .suggestion-card--highlighted { background: #f0f6ff; }
 
 .sugg-thumb-wrap {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
 }
 

@@ -480,8 +480,8 @@ body[data-state="home"] .home-screen {
   line-height: 16px;
 }
 
-.home-disclaimer {
-  position: absolute;
+/* .home-disclaimer {
+  position: relative;
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
@@ -490,7 +490,8 @@ body[data-state="home"] .home-screen {
   text-align: center;
   white-space: nowrap;
   pointer-events: none;
-}
+  opacity: 0;
+} */
 
 /* ══════════════════════════════════════════
    MAP VIEW
