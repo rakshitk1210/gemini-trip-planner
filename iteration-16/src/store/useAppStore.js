@@ -416,12 +416,13 @@ const useAppStore = create((set, get) => ({
   },
 
   focusPlace(sugg) {
-    const { mapInstance, openCard } = get();
-    openCard(sugg, null);
-    if (mapInstance && sugg.lat && sugg.lng) {
-      mapInstance.panTo({ lat: sugg.lat, lng: sugg.lng });
-      if (mapInstance.getZoom() < 12) mapInstance.setZoom(12);
-    }
+    const { mapInstance, openCard, suggPinEls } = get();
+    if (!mapInstance || !sugg.lat || !sugg.lng) { openCard(sugg, null); return; }
+    const pinEl = suggPinEls[sugg.id] || null;
+    if (mapInstance.getZoom() < 12) mapInstance.setZoom(12);
+    mapInstance.panTo({ lat: sugg.lat, lng: sugg.lng });
+    // Wait for pan animation to settle so the pin is at its final screen position
+    google.maps.event.addListenerOnce(mapInstance, 'idle', () => openCard(sugg, pinEl));
   },
 
   // ── Circle draw
@@ -447,6 +448,15 @@ const useAppStore = create((set, get) => ({
 
   setDraggingSuggId(id) {
     set({ draggingSuggId: id });
+  },
+
+  // ── Suggestion pin element registry (id → DOM el, for focusPlace anchoring)
+  suggPinEls: {},
+  setSuggPinEl(id, el) {
+    set(s => ({ suggPinEls: { ...s.suggPinEls, [id]: el } }));
+  },
+  clearSuggPinEls() {
+    set({ suggPinEls: {} });
   },
 
   // ── Map

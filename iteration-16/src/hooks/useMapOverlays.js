@@ -178,6 +178,7 @@ export default function useMapOverlays() {
     // Clear existing suggestion pins
     Object.values(suggPinsRef.current).forEach(p => p.setMap(null));
     suggPinsRef.current = {};
+    useAppStore.getState().clearSuggPinEls();
 
     // Suggestion pins for AI places not in route
     aiPlaces.forEach((sugg, i) => {
@@ -187,6 +188,7 @@ export default function useMapOverlays() {
         const pin = new _SuggestionPin(sugg, placeImages);
         pin.setMap(map);
         suggPinsRef.current[sugg.id] = pin;
+        useAppStore.getState().setSuggPinEl(sugg.id, pin.el);
         setTimeout(() => {
           pin.fadeIn();
           pin.setVisible(activeFilter === 'all' || activeFilter === sugg.category);
