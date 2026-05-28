@@ -1,7 +1,7 @@
 import React from 'react';
 import useAppStore from '../store/useAppStore.js';
 import StopItem from './StopItem.jsx';
-import { getImg } from '../constants.js';
+import SuggestionCard from './SuggestionCard.jsx';
 
 function RouteInfoCard({ n }) {
   const hoursRaw = 1.2 + n * 0.75;
@@ -35,8 +35,6 @@ function RouteInfoCard({ n }) {
 export default function RoutePane() {
   const routeStops  = useAppStore(s => s.routeStops);
   const savedPlaces = useAppStore(s => s.savedPlaces);
-  const unsavePlace = useAppStore(s => s.unsavePlace);
-  const placeImages = useAppStore(s => s.placeImages);
   const addToRoute  = useAppStore(s => s.addToRoute);
   const draggingSuggId = useAppStore(s => s.draggingSuggId);
 
@@ -103,27 +101,12 @@ export default function RoutePane() {
 
       {savedItems.length > 0 && (
         <div className="saved-section">
-          <div className="saved-heading">Saved</div>
-          <ul className="saved-list">
-            {savedItems.map(p => (
-              <li key={p.id} className="saved-item">
-                <div className="saved-thumb-wrap">
-                  <img className="saved-thumb" src={getImg(placeImages, p.name, p.seed, 'thumb')} alt="" />
-                </div>
-                <div className="saved-info">
-                  <div className="saved-name">{p.name}</div>
-                  <div className="saved-meta">
-                    {p.price && <><span>{p.price}</span><span className="saved-sep"> · </span></>}
-                    <span className="material-symbols-rounded saved-star">star</span>
-                    <span>{p.rating}</span>
-                  </div>
-                </div>
-                <button className="saved-remove-btn" onClick={() => unsavePlace(p.id)}>
-                  <span className="material-symbols-rounded">highlight_off</span>
-                </button>
-              </li>
+          <p className="saved-heading">Saved places</p>
+          <div className="chat-card-list">
+            {savedItems.map(sugg => (
+              <SuggestionCard key={sugg.id} sugg={sugg} />
             ))}
-          </ul>
+          </div>
         </div>
       )}
 

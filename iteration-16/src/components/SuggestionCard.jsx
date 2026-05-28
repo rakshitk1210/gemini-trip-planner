@@ -54,7 +54,7 @@ export default function SuggestionCard({ sugg }) {
           title={isSaved ? 'Saved' : 'Save place'}
           onClick={e => { e.stopPropagation(); toggleSave(sugg); }}
         >
-          <span className="material-symbols-rounded">{isSaved ? 'bookmark' : 'bookmark_border'}</span>
+          <span className="material-symbols-rounded">{isSaved ? 'bookmark_remove' : 'bookmark_border'}</span>
         </button>
         <button
           className={`sugg-icon-btn sugg-route-btn${inRoute ? ' sugg-route-btn--added' : ''}`}

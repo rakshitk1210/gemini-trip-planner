@@ -1086,7 +1086,7 @@ body[data-state="route"] .map-view {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   padding: 4px 0;
 }
 
@@ -1126,7 +1126,7 @@ body[data-state="route"] .map-view {
   left: 50%;
   transform: translateX(-50%);
   width: 1.5px;
-  height: calc(100% + 16px);
+  height: calc(100% + 14px);
   background: #dadce0;
   z-index: 0;
 }
@@ -1134,8 +1134,8 @@ body[data-state="route"] .map-view {
 .stop-dot {
   width: 10px; height: 10px;
   border-radius: 50%;
-  border: 2px solid #9aa0a6;
-  background: white;
+  border: 2px solid #1a73e8;
+  background: #1a73e8;
   position: relative;
   z-index: 1;
 }
@@ -1150,12 +1150,12 @@ body[data-state="route"] .map-view {
 
 .stop-name-pill {
   flex: 1;
-  border: 1px solid #202124;
+  border: 1px solid #dadce0;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
-  color: #5f6368;
+  color: #202124;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1176,11 +1176,7 @@ body[data-state="route"] .map-view {
 .stop-remove-btn:hover { color: #5f6368; }
 .stop-remove-btn .material-symbols-rounded { font-size: 18px; }
 
-.route-spacer {
-  height: 4px;
-  background: #f8f9fa;
-  margin: 0 -16px;
-}
+.route-spacer { display: none; }
 
 .route-info-card {
   display: flex;
@@ -1188,6 +1184,7 @@ body[data-state="route"] .map-view {
   gap: 0;
   padding: 16px;
   margin: 0 -16px;
+  border-top: 1px solid #e8eaed;
   border-left: 4px solid #1a73e8;
 }
 
