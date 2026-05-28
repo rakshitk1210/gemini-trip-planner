@@ -619,7 +619,7 @@ body[data-state="route"] .map-view {
   font-family: 'Google Sans', Arial, sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #9aa0a6;
+  color: #49454f;
   cursor: pointer;
   position: relative;
   transition: color 0.15s;
@@ -801,7 +801,7 @@ body[data-state="route"] .map-view {
 .chat-card-list {
   display: flex;
   flex-direction: column;
-  margin: 6px -16px 0;
+  margin: 0 -16px 0;
   border-top: 1px solid #e8eaed;
 }
 /* Suggestion cards inherit all their existing styles */
@@ -1125,9 +1125,16 @@ body[data-state="route"] .map-view {
   top: 50%;
   left: 50%;
   transform: translateX(-50%);
-  width: 1.5px;
+  width: 2px;
   height: calc(100% + 14px);
-  background: #dadce0;
+  background: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #dadce0 0px,
+    #dadce0 2px,
+    transparent 2px,
+    transparent 4px
+  );
   z-index: 0;
 }
 
@@ -1153,8 +1160,8 @@ body[data-state="route"] .map-view {
   border: 1px solid #dadce0;
   border-radius: 8px;
   padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   color: #202124;
   white-space: nowrap;
   overflow: hidden;
@@ -1176,7 +1183,13 @@ body[data-state="route"] .map-view {
 .stop-remove-btn:hover { color: #5f6368; }
 .stop-remove-btn .material-symbols-rounded { font-size: 18px; }
 
-.route-spacer { display: none; }
+.route-spacer {
+  display: block;
+  height: 1px;
+  background: #e8eaed;
+  margin: 0 -16px;
+  flex-shrink: 0;
+}
 
 .route-info-card {
   display: flex;
@@ -1385,12 +1398,65 @@ body[data-state="route"] .map-view {
 .share-btn:hover { background: #f8f9fa; }
 .share-btn .material-symbols-rounded { font-size: 18px; }
 
-.user-avatar {
-  width: 40px; height: 40px;
+@keyframes avatarScaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.avatar-group {
+  display: flex;
+  align-items: center;
+  isolation: isolate;
+}
+
+.avatar-tip {
+  position: relative;
+  display: flex;
+  margin-left: -10px;
+  cursor: default;
+}
+.avatar-tip:first-child { margin-left: 0; z-index: 4; }
+.avatar-tip:nth-child(2) { z-index: 3; }
+.avatar-tip:nth-child(3) { z-index: 2; }
+.avatar-tip:nth-child(4) { z-index: 1; }
+
+.avatar-tip::after {
+  content: attr(data-name);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #202124;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  z-index: 100;
+}
+
+.avatar-tip:hover::after {
+  opacity: 1;
+}
+
+.avatar-item {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid #e8eaed;
+  background: white;
   object-fit: cover;
   display: block;
+}
+
+.avatar-tip--pop {
+  transform-origin: bottom center;
+  animation: avatarScaleIn 200ms ease-out both;
 }
 
 /* ── Toolbar ── */
@@ -1672,15 +1738,16 @@ body[data-state="route"] .map-view {
    SAVED SECTION
 ══════════════════════════════════════════ */
 
-.saved-section { padding: 16px 16px 0; }
+.saved-section { padding: 0; }
 
 .saved-heading {
   font-family: 'Google Sans', Arial, sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: #202124;
-  line-height: 26px;
-  margin-bottom: 8px;
+  line-height: 24px;
+  padding: 24px 0 8px;
+  margin-bottom: 0;
 }
 
 .saved-list {
@@ -1808,6 +1875,7 @@ body.draw-mode .map-area { cursor: crosshair; }
   height: 100%;
   pointer-events: none;
   z-index: 8;
+  user-select: none;
 }
 body.draw-mode .circle-overlay { pointer-events: all; }
 
@@ -1817,6 +1885,7 @@ body.draw-mode .circle-overlay { pointer-events: all; }
   stroke: #1a73e8;
   stroke-width: 2;
   stroke-dasharray: 10 6;
+  stroke-linecap: round;
   display: none;
 }
 
@@ -1837,11 +1906,11 @@ body.draw-mode .circle-overlay { pointer-events: all; }
   pointer-events: all;
 }
 
-/* Curved distance label along top arc */
+/* Distance label below circle */
 .svg-arc-label {
   font-family: 'Google Sans', Arial, sans-serif;
   font-size: 11px;
-  fill: #1a73e8;
+  fill: #202124;
   font-weight: 500;
   letter-spacing: 0.2px;
   display: none;

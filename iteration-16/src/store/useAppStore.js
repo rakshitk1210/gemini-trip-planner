@@ -385,6 +385,13 @@ const useAppStore = create((set, get) => ({
     else                      get().savePlace(sugg);
   },
 
+  // Stores Google-verified lat/lng for a place name. Read inside useMapOverlays via
+  // getState() (not as a React dep) so it doesn't trigger extra overlay rebuilds.
+  coordPatches: {},
+  setCoordPatch(name, lat, lng) {
+    set(s => ({ coordPatches: { ...s.coordPatches, [name]: { lat, lng } } }));
+  },
+
   // ── Place card
   activeCard: null,
 

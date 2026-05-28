@@ -22,12 +22,14 @@ export default function CircleOverlay({ mapAreaRef }) {
   return (
     <>
       <svg id="circleOverlay" className="circle-overlay">
-        <defs><path id="svgArcPath" fill="none" /></defs>
+        <defs>
+          <filter id="labelShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#000000" floodOpacity="0.12" />
+          </filter>
+        </defs>
         <circle id="svgCircle" className="svg-circle" cx="0" cy="0" r="0" style={{ display: 'none' }} />
         <line id="svgRadiusLine" className="svg-radius-line" x1="0" y1="0" x2="0" y2="0" style={{ display: 'none' }} />
-        <text id="svgArcLabel" className="svg-arc-label" style={{ display: 'none' }}>
-          <textPath id="svgArcText" href="#svgArcPath" startOffset="50%" textAnchor="middle" />
-        </text>
+        <text id="svgArcLabel" className="svg-arc-label" textAnchor="middle" filter="url(#labelShadow)" style={{ display: 'none' }} />
         <circle id="svgCenterDot" className="svg-handle-dot" r="6" style={{ display: 'none' }} />
         <circle id="svgEdgeDot"   className="svg-handle-dot" r="6" style={{ display: 'none' }} />
       </svg>

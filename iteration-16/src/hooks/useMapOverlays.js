@@ -182,12 +182,19 @@ export default function useMapOverlays() {
     suggPinsRef.current = {};
     useAppStore.getState().clearSuggPinEls();
 
+    // Apply any Google-verified coordinate corrections without adding them as deps
+    // (avoids cancelling fadeIn timers on every photo load).
+    const applyPatch = (sugg) => {
+      const patch = useAppStore.getState().coordPatches[sugg.name];
+      return patch ? { ...sugg, ...patch } : sugg;
+    };
+
     // Suggestion pins for AI places not in route
     aiPlaces.forEach((sugg, i) => {
       if (routeStops.find(s => s.id === sugg.id)) return;
       const t = setTimeout(() => {
         if (!map) return;
-        const pin = new _SuggestionPin(sugg, placeImages);
+        const pin = new _SuggestionPin(applyPatch(sugg), placeImages);
         pin.setMap(map);
         suggPinsRef.current[sugg.id] = pin;
         setTimeout(() => {
@@ -202,7 +209,7 @@ export default function useMapOverlays() {
     Object.values(stopPinsRef.current).forEach(p => p.setMap(null));
     stopPinsRef.current = {};
     routeStops.forEach((stop, i) => {
-      const pin = new _SquarePin(stop, i + 1, placeImages);
+      const pin = new _SquarePin(applyPatch(stop), i + 1, placeImages);
       pin.setMap(map);
       stopPinsRef.current[stop.id] = pin;
       setTimeout(() => pin.fadeIn(), 20);
@@ -212,7 +219,7 @@ export default function useMapOverlays() {
     Object.values(bookmarkPinsRef.current).forEach(p => p.setMap(null));
     bookmarkPinsRef.current = {};
     Object.values(savedPlaces).forEach(sugg => {
-      const pin = new _BookmarkPin(sugg);
+      const pin = new _BookmarkPin(applyPatch(sugg));
       pin.setMap(map);
       bookmarkPinsRef.current[sugg.id] = pin;
     });

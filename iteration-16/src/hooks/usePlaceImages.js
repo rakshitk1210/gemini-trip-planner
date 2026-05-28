@@ -7,13 +7,21 @@ function fetchImage(name, service) {
   const query = SEARCH_OVERRIDES[name] ?? name;
   return new Promise(resolve => {
     service.findPlaceFromQuery(
-      { query, fields: ['place_id', 'photos'] },
+      { query, fields: ['place_id', 'photos', 'geometry'] },
       (results, status) => {
         if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.[0]) {
           resolve(null); return;
         }
         const first   = results[0];
         const placeId = first.place_id;
+
+        // Record Google's verified coordinates so the overlay rebuild
+        // (triggered later by setPlaceImage) applies the corrected position.
+        const loc = first.geometry?.location;
+        if (loc) {
+          useAppStore.getState().setCoordPatch(name, loc.lat(), loc.lng());
+        }
+
         if (placeId) {
           service.getDetails({ placeId, fields: ['photos'] }, (place, ds) => {
             const src = (ds === google.maps.places.PlacesServiceStatus.OK && place?.photos?.length)

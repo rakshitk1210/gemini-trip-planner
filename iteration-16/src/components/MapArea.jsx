@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Map } from '@vis.gl/react-google-maps';
 import useAppStore from '../store/useAppStore.js';
 import MapCanvas from './MapCanvas.jsx';
@@ -6,6 +6,10 @@ import PlaceCard from './PlaceCard.jsx';
 import CircleOverlay from './CircleOverlay.jsx';
 import MapToolbar from './MapToolbar.jsx';
 import { MAP_STYLES } from '../constants.js';
+import imgRakshit  from '../assets/rakshit.png';
+import imgAshu     from '../assets/ashu.jpg';
+import imgDhruv    from '../assets/dhruv.jpg';
+import imgPrasanna from '../assets/Prasanna.jpg';
 
 function OptimizeToast() {
   const routeStops = useAppStore(s => s.routeStops);
@@ -37,6 +41,7 @@ function OptimizeToast() {
 
 export default function MapArea() {
   const mapAreaRef = useRef(null);
+  const [shareExpanded, setShareExpanded] = useState(false);
 
   return (
     <div className="map-area" id="mapArea" ref={mapAreaRef}>
@@ -61,11 +66,26 @@ export default function MapArea() {
       <PlaceCard />
 
       <div className="map-topright">
-        <button className="share-btn">
+        <button className="share-btn" onClick={() => setShareExpanded(v => !v)}>
           <span className="material-symbols-rounded">share</span>
           Share
         </button>
-        <img className="user-avatar" src="https://picsum.photos/seed/rakshit/40/40" alt="User" />
+        <div className="avatar-group">
+          <div className="avatar-tip" data-name="Rakshit">
+            <img className="avatar-item" src={imgRakshit} alt="Rakshit" />
+          </div>
+          {shareExpanded && <>
+            <div className="avatar-tip avatar-tip--pop" style={{ animationDelay: '0ms'   }} data-name="Ashu">
+              <img className="avatar-item" src={imgAshu} alt="Ashu" />
+            </div>
+            <div className="avatar-tip avatar-tip--pop" style={{ animationDelay: '300ms' }} data-name="Prasanna">
+              <img className="avatar-item" src={imgPrasanna} alt="Prasanna" />
+            </div>
+            <div className="avatar-tip avatar-tip--pop" style={{ animationDelay: '600ms' }} data-name="Dhruv">
+              <img className="avatar-item" src={imgDhruv} alt="Dhruv" />
+            </div>
+          </>}
+        </div>
       </div>
 
       {/* Toolbar uses mapInstance from store — no need to be inside <Map> */}

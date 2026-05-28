@@ -39,6 +39,7 @@ export default function useCircleDraw(mapAreaRef) {
 
     function onMouseDown(e) {
       e.stopPropagation();
+      e.preventDefault();
       const rect = el.getBoundingClientRect();
       drawStateRef.current = {
         active: true,
@@ -149,13 +150,13 @@ export function updateOverlay(cx, cy, r) {
   eDot.setAttribute('cx', cx + r); eDot.setAttribute('cy', cy); eDot.style.display = 'block';
 
   if (r >= 20) {
-    const arcPath = document.getElementById('svgArcPath');
-    arcPath.setAttribute('d', `M ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx + r} ${cy}`);
     const mapInst  = useAppStore.getState().mapInstance;
     const radiusKm = mapInst ? pixelsToKm(mapInst, cx, cy, r) : r * 0.3;
     const driveMins = Math.round(radiusKm / 50 * 60);
     const distStr = radiusKm >= 1 ? `${radiusKm.toFixed(1)} km` : `${Math.round(radiusKm * 1000)} m`;
-    document.getElementById('svgArcText').textContent = `${distStr}  ·  ${driveMins} min`;
+    arcLabel.setAttribute('x', cx);
+    arcLabel.setAttribute('y', cy + r + 20);
+    arcLabel.textContent = `${distStr}  ·  ${driveMins} min`;
     arcLabel.style.display = 'block';
   } else {
     arcLabel.style.display = 'none';
