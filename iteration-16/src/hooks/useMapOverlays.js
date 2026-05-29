@@ -194,7 +194,8 @@ export default function useMapOverlays() {
       if (routeStops.find(s => s.id === sugg.id)) return;
       const t = setTimeout(() => {
         if (!map) return;
-        const pin = new _SuggestionPin(applyPatch(sugg), placeImages);
+        const imgs = useAppStore.getState().placeImages; // read fresh — not a dep so image loads don't rebuild
+        const pin = new _SuggestionPin(applyPatch(sugg), imgs);
         pin.setMap(map);
         suggPinsRef.current[sugg.id] = pin;
         setTimeout(() => {
@@ -209,7 +210,8 @@ export default function useMapOverlays() {
     Object.values(stopPinsRef.current).forEach(p => p.setMap(null));
     stopPinsRef.current = {};
     routeStops.forEach((stop, i) => {
-      const pin = new _SquarePin(applyPatch(stop), i + 1, placeImages);
+      const imgs = useAppStore.getState().placeImages;
+      const pin = new _SquarePin(applyPatch(stop), i + 1, imgs);
       pin.setMap(map);
       stopPinsRef.current[stop.id] = pin;
       setTimeout(() => pin.fadeIn(), 20);
@@ -239,7 +241,22 @@ export default function useMapOverlays() {
       Object.values(stopPinsRef.current).forEach(p => p.setMap(null));
       Object.values(bookmarkPinsRef.current).forEach(p => p.setMap(null));
     };
-  }, [map, aiPlaces, routeStops, savedPlaces, activeFilter, placeImages]);
+  }, [map, aiPlaces, routeStops, savedPlaces, activeFilter]);
+
+  // When a photo loads, surgically update the img.src on the existing pin —
+  // no full rebuild, no timer cancellation.
+  useEffect(() => {
+    const allPins = [
+      ...Object.values(suggPinsRef.current),
+      ...Object.values(stopPinsRef.current),
+    ];
+    allPins.forEach(pin => {
+      if (!pin.el) return;
+      const img   = pin.el.querySelector('.square-pin-photo');
+      const entry = placeImages[pin.sugg.name];
+      if (img && entry?.thumb) img.src = entry.thumb;
+    });
+  }, [placeImages]);
 
   // Apply active-card highlight on suggestion pins
   useEffect(() => {

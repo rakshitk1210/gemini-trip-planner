@@ -252,13 +252,16 @@ const useAppStore = create((set, get) => ({
     const r      = activeCircle?.radiusKm ?? 0;
     const rLabel = `${r.toFixed(1)} km`;
 
-    // Reverse-geocode the circle center to get a real place name for Claude
-    const anchor = await getAnchorName(center, routeStops, aiPlaces);
-    const locationCtx = anchor
-      ? ` near ${anchor}, within ${rLabel}. Only return places actually located near ${anchor}.`
-      : center
-      ? ` within ${rLabel} of ${center.lat.toFixed(3)}°N, ${center.lng.toFixed(3)}°E.`
-      : '';
+    // Build location context: coordinates are the reliable anchor,
+    // reverse-geocoded name gives Claude extra semantic context.
+    const anchor    = await getAnchorName(center, routeStops, aiPlaces);
+    const coordStr  = center ? `${center.lat.toFixed(4)}°N, ${center.lng.toFixed(4)}°E` : null;
+    let locationCtx = '';
+    if (coordStr) {
+      locationCtx  = ` within ${rLabel} of ${coordStr}`;
+      if (anchor) locationCtx += ` (near ${anchor})`;
+      locationCtx += `. Only return places genuinely within ${rLabel} of these coordinates.`;
+    }
     const fullPrompt = userPrompt + locationCtx;
 
     const turnId = nextId();
