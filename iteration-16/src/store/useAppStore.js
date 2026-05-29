@@ -129,6 +129,40 @@ async function getAnchorName(center, routeStops, aiPlaces) {
   return nearest?.name ?? null;
 }
 
+// ── Google Places nearbySearch (area search) ──────────────────────────────
+function placesNearbySearch(mapInstance, location, radiusM, keyword) {
+  return new Promise((resolve) => {
+    const svc = new google.maps.places.PlacesService(mapInstance);
+    svc.nearbySearch(
+      { location, radius: Math.min(radiusM, 50000), keyword: keyword || undefined },
+      (results, status) => {
+        const ok = [
+          google.maps.places.PlacesServiceStatus.OK,
+          google.maps.places.PlacesServiceStatus.ZERO_RESULTS,
+        ];
+        resolve(ok.includes(status) ? (results ?? []) : []);
+      }
+    );
+  });
+}
+
+function mapGooglePlace(r, i) {
+  const types = r.types ?? [];
+  let category = 'scenic';
+  if (types.some(t => ['restaurant', 'food', 'cafe', 'bar', 'meal_takeaway', 'meal_delivery'].includes(t))) category = 'restaurant';
+  else if (types.some(t => ['lodging'].includes(t))) category = 'hotel';
+  return {
+    id:       `places-${r.place_id}`,
+    name:     r.name,
+    category,
+    lat:      r.geometry.location.lat(),
+    lng:      r.geometry.location.lng(),
+    rating:   r.rating ?? 4.2,
+    desc:     r.vicinity ?? '',
+    seed:     (i + 1) * 73 + 17,
+  };
+}
+
 const useAppStore = create((set, get) => ({
   // ── Screen
   screen:    'home',
@@ -247,22 +281,11 @@ const useAppStore = create((set, get) => ({
   },
 
   async doAreaSearch(userPrompt) {
-    const { activeCircle, mapInstance, aiPlaces, routeStops } = get();
-    const center = circleCenter(activeCircle, mapInstance);
-    const r      = activeCircle?.radiusKm ?? 0;
-    const rLabel = `${r.toFixed(1)} km`;
-
-    // Build location context: coordinates are the reliable anchor,
-    // reverse-geocoded name gives Claude extra semantic context.
-    const anchor    = await getAnchorName(center, routeStops, aiPlaces);
-    const coordStr  = center ? `${center.lat.toFixed(4)}°N, ${center.lng.toFixed(4)}°E` : null;
-    let locationCtx = '';
-    if (coordStr) {
-      locationCtx  = ` within ${rLabel} of ${coordStr}`;
-      if (anchor) locationCtx += ` (near ${anchor})`;
-      locationCtx += `. Only return places genuinely within ${rLabel} of these coordinates.`;
-    }
-    const fullPrompt = userPrompt + locationCtx;
+    const { activeCircle, mapInstance } = get();
+    const center  = circleCenter(activeCircle, mapInstance);
+    const r       = activeCircle?.radiusKm ?? 0;
+    const rLabel  = `${r.toFixed(1)} km`;
+    const radiusM = r * 1000;
 
     const turnId = nextId();
     set(s => ({
@@ -270,45 +293,27 @@ const useAppStore = create((set, get) => ({
         id: turnId, userText: userPrompt, aiText: '', cards: [], chips: [],
         moreLabel: 'more places', isThinking: true, error: null,
       }],
-      conversationHistory: [...s.conversationHistory, { role: 'user', text: fullPrompt }],
       isThinking: true,
     }));
 
-    let places;
+    let places = [];
     try {
-      places = await callClaude(get().conversationHistory);
+      // Use Google Places nearbySearch — guaranteed geographic accuracy,
+      // results are always within the drawn radius.
+      const raw = await placesNearbySearch(mapInstance, center, radiusM, userPrompt);
+      places = raw.slice(0, 10).map(mapGooglePlace);
     } catch (err) {
-      console.error('Claude error:', err);
-      set(s => ({
-        isThinking: false,
-        conversationHistory: s.conversationHistory.slice(0, -1),
-        chatTurns: s.chatTurns.map(t => t.id === turnId
-          ? { ...t, isThinking: false, error: "Couldn't reach Claude — try again." }
-          : t),
-      }));
-      return;
+      console.error('Places nearby search error:', err);
     }
 
-    let resultLabel = '';
-    if (center) {
-      const inside = places.filter(p => haversineKm(center, p) <= r * 1.15);
-      if (inside.length > 0) {
-        places      = inside;
-        resultLabel = `${places.length} suggestion${places.length !== 1 ? 's' : ''} within ${rLabel}`;
-      } else {
-        places      = [...places].sort((a, b) => haversineKm(center, a) - haversineKm(center, b)).slice(0, 5);
-        resultLabel = `${places.length} nearby suggestion${places.length !== 1 ? 's' : ''} (nearest to your area)`;
-      }
-    } else {
-      resultLabel = `${places.length} suggestion${places.length !== 1 ? 's' : ''} in the area`;
-    }
+    const resultLabel = places.length
+      ? `${places.length} suggestion${places.length !== 1 ? 's' : ''} within ${rLabel}`
+      : `No places found in this area`;
 
     set(s => ({
       isThinking: false,
-      // Replace map pins with this query's results — route stops & saved places persist in their own state
       aiPlaces:     places,
       activeFilter: 'all',
-      conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
       chatTurns: s.chatTurns.map(t => t.id === turnId
         ? { ...t, isThinking: false, aiText: resultLabel, cards: places, moreLabel: 'more places' }
         : t),
