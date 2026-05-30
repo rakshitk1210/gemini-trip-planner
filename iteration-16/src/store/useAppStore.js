@@ -514,7 +514,7 @@ const useAppStore = create((set, get) => ({
     if (!pendingComment || !text.trim()) return;
     const id = `comment-${Date.now()}`;
     set(s => ({
-      comments: [...s.comments, { id, text: text.trim(), lat: pendingComment.lat, lng: pendingComment.lng }],
+      comments: [...s.comments, { id, text: text.trim(), lat: pendingComment.lat, lng: pendingComment.lng, createdAt: Date.now() }],
       pendingComment: null,
       commentMode: false,     // exit comment mode after posting
     }));
@@ -535,6 +535,26 @@ const useAppStore = create((set, get) => ({
   },
   setActiveCommentId(id) {
     set({ activeCommentId: id });
+  },
+
+  addCommentAsStop(comment) {
+    const stop = {
+      id:       `comment-stop-${comment.id}`,
+      name:     comment.text.length > 40 ? comment.text.slice(0, 40) + '…' : comment.text,
+      category: 'scenic',
+      lat:      comment.lat,
+      lng:      comment.lng,
+      rating:   null,
+      desc:     'Comment location',
+      seed:     42,
+    };
+    set(s => {
+      if (s.routeStops.find(r => r.id === stop.id)) return {};
+      const idx = bestInsertIndex(s.routeStops, stop);
+      const next = [...s.routeStops];
+      next.splice(idx, 0, stop);
+      return { routeStops: twoOpt(next) };
+    });
   },
 
   // ── Reply context

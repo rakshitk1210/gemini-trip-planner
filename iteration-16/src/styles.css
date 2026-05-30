@@ -2019,15 +2019,38 @@ body.draw-mode .map-area { cursor: crosshair; }
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 2px rgba(0,0,0,0.12);
-  padding: 16px;
+  padding: 16px 16px 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 24px;
   z-index: 20;
 }
+.comment-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.comment-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.comment-detail-avatar {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.comment-detail-author {
+  font-size: 12px;
+  font-family: "Google Sans", Roboto, Arial, sans-serif;
+  font-weight: 500;
+  color: #9aa0a6;
+  line-height: 16px;
+}
 .comment-detail-text {
   font-size: 16px;
-  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  font-family: "Google Sans", Roboto, Arial, sans-serif;
   color: #202124;
   line-height: 24px;
 }
@@ -2035,13 +2058,6 @@ body.draw-mode .map-area { cursor: crosshair; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-.comment-detail-avatar {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #e8eaed;
-  flex-shrink: 0;
 }
 .comment-detail-actions {
   display: flex;

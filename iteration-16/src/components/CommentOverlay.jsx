@@ -63,6 +63,11 @@ function initCommentPin() {
   };
 }
 
+function formatTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function CommentOverlay() {
   const map = useMap();
@@ -77,9 +82,10 @@ export default function CommentOverlay() {
   const toggleCommentMode = useAppStore(s => s.toggleCommentMode);
   const deleteComment   = useAppStore(s => s.deleteComment);
   const startEditComment= useAppStore(s => s.startEditComment);
-  const setActiveCommentId = useAppStore(s => s.setActiveCommentId);
-  const setReplyContext    = useAppStore(s => s.setReplyContext);
-  const isThinking        = useAppStore(s => s.isThinking);
+  const setActiveCommentId  = useAppStore(s => s.setActiveCommentId);
+  const setReplyContext     = useAppStore(s => s.setReplyContext);
+  const addCommentAsStop   = useAppStore(s => s.addCommentAsStop);
+  const isThinking         = useAppStore(s => s.isThinking);
 
   // Pixel positions for the pending dot and active detail popup
   const [pendingPos, setPendingPos]     = useState(null);
@@ -285,23 +291,39 @@ export default function CommentOverlay() {
               top:  activePos.y + 30,
             }}
           >
-            <p className="comment-detail-text">{comment.text}</p>
+            {/* Header: avatar + name + timestamp */}
+            <div className="comment-detail-body">
+              <div className="comment-detail-header">
+                <img className="comment-detail-avatar" src={imgRakshit} alt="Author" />
+                <span className="comment-detail-author">
+                  Rakshit{comment.createdAt ? ` • ${formatTime(comment.createdAt)}` : ''}
+                </span>
+              </div>
+              <p className="comment-detail-text">{comment.text}</p>
+            </div>
+            {/* Actions footer */}
             <div className="comment-detail-footer">
-              <img className="comment-detail-avatar" src={imgRakshit} alt="Author" />
+              <button
+                className="comment-action-btn comment-action-btn--delete"
+                title="Delete"
+                onClick={() => deleteComment(comment.id)}
+              >
+                <span className="material-symbols-rounded">delete</span>
+              </button>
               <div className="comment-detail-actions">
-                <button
-                  className="comment-action-btn comment-action-btn--delete"
-                  title="Delete"
-                  onClick={() => deleteComment(comment.id)}
-                >
-                  <span className="material-symbols-rounded">delete</span>
-                </button>
                 <button
                   className="comment-action-btn"
                   title="Edit"
                   onClick={() => startEditComment(comment.id)}
                 >
                   <span className="material-symbols-rounded">edit</span>
+                </button>
+                <button
+                  className="comment-action-btn"
+                  title="Add to route"
+                  onClick={() => addCommentAsStop(comment)}
+                >
+                  <span className="material-symbols-rounded">add</span>
                 </button>
                 <button
                   className="comment-reply-btn"
