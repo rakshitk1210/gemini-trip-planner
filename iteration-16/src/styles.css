@@ -1957,6 +1957,12 @@ body.draw-mode .map-area { cursor: crosshair; }
   border-radius: 50%;
 }
 
+/* In-route indicator: blue ring around the avatar dot */
+.comment-dot--in-route {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px #1a73e8, 0 1px 4px rgba(0,0,0,0.35);
+}
+
 /* Pending dot (waiting for input) */
 .comment-dot--pending {
   position: absolute;

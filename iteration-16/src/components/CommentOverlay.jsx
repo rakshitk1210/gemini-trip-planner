@@ -50,6 +50,10 @@ function initCommentPin() {
       this.el = el;
       this.getPanes().overlayMouseTarget.appendChild(el);
     }
+    setInRoute(inRoute) {
+      if (!this.el) return;
+      this.el.classList.toggle('comment-dot--in-route', inRoute);
+    }
     draw() {
       if (!this.el) return;
       const proj = this.getProjection();
@@ -84,8 +88,9 @@ export default function CommentOverlay() {
   const startEditComment= useAppStore(s => s.startEditComment);
   const setActiveCommentId  = useAppStore(s => s.setActiveCommentId);
   const setReplyContext     = useAppStore(s => s.setReplyContext);
-  const addCommentAsStop   = useAppStore(s => s.addCommentAsStop);
-  const isThinking         = useAppStore(s => s.isThinking);
+  const addCommentAsStop    = useAppStore(s => s.addCommentAsStop);
+  const routeStops          = useAppStore(s => s.routeStops);
+  const isThinking          = useAppStore(s => s.isThinking);
 
   // Pixel positions for the pending dot and active detail popup
   const [pendingPos, setPendingPos]     = useState(null);
@@ -170,6 +175,15 @@ export default function CommentOverlay() {
       pin.onClickId = (id) => setActiveCommentId(activeCommentId === id ? null : id);
     });
   }, [activeCommentId]);
+
+  // Sync in-route ring on pins when routeStops changes
+  useEffect(() => {
+    const stopIds = new Set(routeStops.map(s => s.id));
+    Object.entries(commentPinsRef.current).forEach(([commentId, pin]) => {
+      // Route stop ID is `comment-stop-${comment.id}`, commentId IS the comment.id
+      pin.setInRoute(stopIds.has(`comment-stop-${commentId}`));
+    });
+  }, [routeStops]);
 
   // ── Compute active comment popup position ─────────────────────────────────
   useEffect(() => {
