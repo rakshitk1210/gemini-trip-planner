@@ -209,10 +209,12 @@ export default function useMapOverlays() {
     // Route stop pins (skip comment-derived stops — their avatar dot already marks the spot)
     Object.values(stopPinsRef.current).forEach(p => p.setMap(null));
     stopPinsRef.current = {};
-    routeStops.forEach((stop, i) => {
+    let pinNumber = 0;
+    routeStops.forEach((stop) => {
       if (stop.id.startsWith('comment-stop-')) return;
+      pinNumber++;
       const imgs = useAppStore.getState().placeImages;
-      const pin = new _SquarePin(applyPatch(stop), i + 1, imgs);
+      const pin = new _SquarePin(applyPatch(stop), pinNumber, imgs);
       pin.setMap(map);
       stopPinsRef.current[stop.id] = pin;
       setTimeout(() => pin.fadeIn(), 20);

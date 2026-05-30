@@ -37,12 +37,15 @@ export default function useDirections() {
 
   useEffect(() => {
     if (polyRef.current) { polyRef.current.setMap(null); polyRef.current = null; }
-    if (!map || routeStops.length < 2) return;
+    // Exclude comment-derived stops from the polyline — they are waypoints in the list
+    // but have no road-routable location and the comment dot already marks the spot visually.
+    const visibleStops = routeStops.filter(s => !s.id.startsWith('comment-stop-'));
+    if (!map || visibleStops.length < 2) return;
 
     const svc      = new google.maps.DirectionsService();
-    const origin   = new google.maps.LatLng(routeStops[0].lat, routeStops[0].lng);
-    const dest     = new google.maps.LatLng(routeStops[routeStops.length - 1].lat, routeStops[routeStops.length - 1].lng);
-    const waypoints = routeStops.slice(1, -1).map(s => ({
+    const origin   = new google.maps.LatLng(visibleStops[0].lat, visibleStops[0].lng);
+    const dest     = new google.maps.LatLng(visibleStops[visibleStops.length - 1].lat, visibleStops[visibleStops.length - 1].lng);
+    const waypoints = visibleStops.slice(1, -1).map(s => ({
       location: new google.maps.LatLng(s.lat, s.lng), stopover: true,
     }));
 
@@ -53,7 +56,7 @@ export default function useDirections() {
         if (status === 'OK') {
           animatePolyline(map, result.routes[0].overview_path, polyRef);
         } else {
-          console.warn(`DirectionsService ${mode} failed (${status}):`, routeStops.map(s => `${s.name} (${s.lat.toFixed(3)},${s.lng.toFixed(3)})`));
+          console.warn(`DirectionsService ${mode} failed (${status}):`, visibleStops.map(s => `${s.name} (${s.lat.toFixed(3)},${s.lng.toFixed(3)})`));
           onFail();
         }
       });
@@ -62,7 +65,7 @@ export default function useDirections() {
     // Try DRIVING → fallback WALKING → fallback straight line
     tryMode(google.maps.TravelMode.DRIVING, () =>
       tryMode(google.maps.TravelMode.WALKING, () => {
-        polyRef.current = drawStraightPolyline(map, routeStops);
+        polyRef.current = drawStraightPolyline(map, visibleStops);
       })
     );
 
