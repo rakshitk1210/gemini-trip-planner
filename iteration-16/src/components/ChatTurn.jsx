@@ -47,7 +47,8 @@ function ChipRow({ chips, turnId }) {
 }
 
 const ChatTurn = memo(function ChatTurn({ turn }) {
-  const { id, userText, aiText, cards, chips, moreLabel, isThinking, error } = turn;
+  const { id, userText, aiText, cards, chips, moreLabel, isThinking, error, visibleOnMap } = turn;
+  const toggleTurnVisibility = useAppStore(s => s.toggleTurnVisibility);
   const [displayedText, setDisplayedText] = useState(isThinking ? '' : aiText);
   const [textDone, setTextDone]           = useState(!isThinking && aiText.length > 0);
   const prevThinkingRef = useRef(isThinking);
@@ -94,8 +95,21 @@ const ChatTurn = memo(function ChatTurn({ turn }) {
         </p>
       ) : null}
 
-      {/* Suggestion cards — bleed to panel edges */}
-      {textDone && cards?.length > 0 && <CardList cards={cards} />}
+      {/* Map visibility header + suggestion cards */}
+      {textDone && cards?.length > 0 && (
+        <>
+          <div className="turn-map-header">
+            <span className="turn-map-count">{cards.length} places</span>
+            <button className="turn-map-toggle" onClick={() => toggleTurnVisibility(id)}>
+              <span className="material-symbols-rounded">
+                {visibleOnMap ? 'visibility_off' : 'visibility'}
+              </span>
+              {visibleOnMap ? 'Hide on Map' : 'Show on Map'}
+            </button>
+          </div>
+          <CardList cards={cards} />
+        </>
+      )}
     </div>
   );
 });

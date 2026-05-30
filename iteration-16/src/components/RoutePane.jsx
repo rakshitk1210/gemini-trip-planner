@@ -59,13 +59,6 @@ export default function RoutePane() {
   return (
     <div className={`tab-pane${activeTab !== 'route' ? ' tab-pane--hidden' : ''}`} id="paneroute">
 
-      {hasStops && (
-        <div className={`route-optimized-chip${n === 1 ? ' route-optimized-chip--building' : ''}`} id="routeOptChip">
-          <span className="material-symbols-rounded">auto_awesome</span>
-          <span>{optLabel}</span>
-        </div>
-      )}
-
       {!hasStops && (
         <div
           className="route-empty-state"

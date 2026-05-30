@@ -42,6 +42,13 @@ function allPlaces(aiPlaces) {
   return aiPlaces.length ? aiPlaces : SUGGESTIONS;
 }
 
+// Derive map pins from all turns that are currently visible on the map.
+// Uses allPlaces (the full set returned by Claude/Places) when available,
+// falling back to the display cards for turns that don't carry a separate allPlaces field.
+function derivedPlaces(turns) {
+  return turns.flatMap(t => t.visibleOnMap ? (t.allPlaces ?? t.cards ?? []) : []);
+}
+
 function bestInsertIndex(stops, newStop) {
   const n = stops.length;
   if (n < 2) return n;
@@ -183,9 +190,9 @@ const useAppStore = create((set, get) => ({
 
     const turnId = nextId();
     set(s => ({
-      chatTurns: [...s.chatTurns, {
+      chatTurns: [...s.chatTurns.map(t => ({ ...t, visibleOnMap: false })), {
         id: turnId, userText: text, aiText: '', cards: [], chips: [],
-        moreLabel: 'more places', isThinking: true, error: null,
+        moreLabel: 'more places', isThinking: true, error: null, visibleOnMap: true,
       }],
       conversationHistory: [{ role: 'user', text }],
       aiPlaces: [],
@@ -218,14 +225,17 @@ const useAppStore = create((set, get) => ({
       hasFood  && { label: 'Food',   icon: 'restaurant', filter: 'restaurant' },
     ].filter(Boolean);
 
-    set(s => ({
-      aiPlaces:            places,
-      activeFilter:        scenic.length ? 'scenic' : 'all',
-      conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
-      chatTurns: s.chatTurns.map(t => t.id === turnId
-        ? { ...t, isThinking: false, aiText: mainText, cards: mainCards, chips, moreLabel: scenic.length ? 'more scenic spots' : 'more places' }
-        : t),
-    }));
+    set(s => {
+      const turns = s.chatTurns.map(t => t.id === turnId
+        ? { ...t, isThinking: false, aiText: mainText, cards: mainCards, allPlaces: places, chips, moreLabel: scenic.length ? 'more scenic spots' : 'more places' }
+        : t);
+      return {
+        aiPlaces:            derivedPlaces(turns),
+        activeFilter:        scenic.length ? 'scenic' : 'all',
+        conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
+        chatTurns:           turns,
+      };
+    });
   },
 
   // ── Chat
@@ -234,9 +244,27 @@ const useAppStore = create((set, get) => ({
   isThinking:          false,
 
   async submitFooter(text) {
-    const { activeCircle, mapInstance } = get();
-    if (!text && !activeCircle) return;
-    const prompt = text || 'Find things in this area';
+    const { activeCircle, mapInstance, replyContext } = get();
+
+    // Build the display text (shown in chat) and the Claude prompt (includes location)
+    let displayText = text.trim();
+    let locationNote = '';
+
+    if (replyContext) {
+      displayText = displayText
+        ? `"${replyContext.text}" — ${displayText}`
+        : replyContext.text;
+      // Append lat/lng so Claude returns geographically anchored results
+      if (replyContext.lat != null && replyContext.lng != null) {
+        locationNote = ` [near ${replyContext.lat.toFixed(4)}, ${replyContext.lng.toFixed(4)}]`;
+      }
+      get().clearReplyContext();
+    }
+
+    if (!displayText && !activeCircle) return;
+    const prompt = displayText || 'Find things in this area';
+    // Claude gets location context; UI shows clean text
+    const claudePrompt = prompt + locationNote;
 
     if (activeCircle) {
       get().doAreaSearch(prompt);
@@ -245,11 +273,11 @@ const useAppStore = create((set, get) => ({
 
     const turnId = nextId();
     set(s => ({
-      chatTurns: [...s.chatTurns, {
+      chatTurns: [...s.chatTurns.map(t => ({ ...t, visibleOnMap: false })), {
         id: turnId, userText: prompt, aiText: '', cards: [], chips: [],
-        moreLabel: 'more places', isThinking: true, error: null,
+        moreLabel: 'more places', isThinking: true, error: null, visibleOnMap: true,
       }],
-      conversationHistory: [...s.conversationHistory, { role: 'user', text: prompt }],
+      conversationHistory: [...s.conversationHistory, { role: 'user', text: claudePrompt }],
       isThinking: true,
     }));
 
@@ -268,16 +296,18 @@ const useAppStore = create((set, get) => ({
       return;
     }
 
-    set(s => ({
-      isThinking: false,
-      // Replace map pins with this query's results — route stops & saved places persist in their own state
-      aiPlaces:     places,
-      activeFilter: 'all',
-      conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
-      chatTurns: s.chatTurns.map(t => t.id === turnId
+    set(s => {
+      const turns = s.chatTurns.map(t => t.id === turnId
         ? { ...t, isThinking: false, aiText: `Here are ${places.length} places for you`, cards: places, moreLabel: 'more places' }
-        : t),
-    }));
+        : t);
+      return {
+        isThinking:          false,
+        aiPlaces:            derivedPlaces(turns),
+        activeFilter:        'all',
+        conversationHistory: [...s.conversationHistory, { role: 'assistant', text: JSON.stringify(places) }],
+        chatTurns:           turns,
+      };
+    });
   },
 
   async doAreaSearch(userPrompt) {
@@ -289,9 +319,9 @@ const useAppStore = create((set, get) => ({
 
     const turnId = nextId();
     set(s => ({
-      chatTurns: [...s.chatTurns, {
+      chatTurns: [...s.chatTurns.map(t => ({ ...t, visibleOnMap: false })), {
         id: turnId, userText: userPrompt, aiText: '', cards: [], chips: [],
-        moreLabel: 'more places', isThinking: true, error: null,
+        moreLabel: 'more places', isThinking: true, error: null, visibleOnMap: true,
       }],
       isThinking: true,
     }));
@@ -310,14 +340,17 @@ const useAppStore = create((set, get) => ({
       ? `${places.length} suggestion${places.length !== 1 ? 's' : ''} within ${rLabel}`
       : `No places found in this area`;
 
-    set(s => ({
-      isThinking: false,
-      aiPlaces:     places,
-      activeFilter: 'all',
-      chatTurns: s.chatTurns.map(t => t.id === turnId
+    set(s => {
+      const turns = s.chatTurns.map(t => t.id === turnId
         ? { ...t, isThinking: false, aiText: resultLabel, cards: places, moreLabel: 'more places' }
-        : t),
-    }));
+        : t);
+      return {
+        isThinking:   false,
+        aiPlaces:     derivedPlaces(turns),
+        activeFilter: 'all',
+        chatTurns:    turns,
+      };
+    });
   },
 
   appendChipTurn(chipDef) {
@@ -325,15 +358,28 @@ const useAppStore = create((set, get) => ({
     const places   = allPlaces(ap).filter(s => s.category === chipDef.filter);
     const def      = { hotel: { aiText: 'Here are the hotels along your route', moreLabel: 'more hotels' }, restaurant: { aiText: 'Here are restaurants and cafés along your route', moreLabel: 'more restaurants' }, scenic: { aiText: 'Here are scenic highlights for your route', moreLabel: 'more scenic spots' } }[chipDef.filter] || {};
     const turnId   = nextId();
-    set(s => ({
-      activeFilter: chipDef.filter,
-      chatTurns: [...s.chatTurns, {
+    set(s => {
+      const turns = [...s.chatTurns.map(t => ({ ...t, visibleOnMap: false })), {
         id: turnId, userText: chipDef.label,
         aiText: def.aiText || `Here are ${places.length} ${chipDef.label.toLowerCase()}`,
         cards: places, chips: [], moreLabel: def.moreLabel || 'more places',
-        isThinking: false, error: null,
-      }],
-    }));
+        isThinking: false, error: null, visibleOnMap: true,
+      }];
+      return {
+        activeFilter: chipDef.filter,
+        chatTurns:    turns,
+        aiPlaces:     derivedPlaces(turns),
+      };
+    });
+  },
+
+  toggleTurnVisibility(turnId) {
+    set(s => {
+      const turns = s.chatTurns.map(t =>
+        t.id === turnId ? { ...t, visibleOnMap: !t.visibleOnMap } : t
+      );
+      return { chatTurns: turns, aiPlaces: derivedPlaces(turns) };
+    });
   },
 
   // ── Places
@@ -440,6 +486,67 @@ const useAppStore = create((set, get) => ({
     google.maps.event.addListenerOnce(mapInstance, 'idle', () => openCard(sugg, pinEl));
   },
 
+  // ── Comments
+  commentMode:     false,
+  comments:        [],   // [{ id, text, lat, lng }]
+  pendingComment:  null, // { lat, lng } — position waiting for text input
+  activeCommentId: null, // id of the dot whose detail popup is open
+  editingCommentId: null, // id of comment being edited (re-opens input card)
+
+  toggleCommentMode() {
+    set(s => ({ commentMode: !s.commentMode, pendingComment: null, activeCommentId: null, editingCommentId: null }));
+  },
+  setPendingComment(latLng) {
+    set({ pendingComment: latLng, activeCommentId: null, editingCommentId: null });
+  },
+  submitComment(text, editId) {
+    if (editId) {
+      set(s => ({
+        comments: s.comments.map(c => c.id === editId ? { ...c, text: text.trim() } : c),
+        pendingComment: null,
+        editingCommentId: null,
+        activeCommentId: null,
+        commentMode: false,   // exit comment mode after editing
+      }));
+      return;
+    }
+    const { pendingComment } = get();
+    if (!pendingComment || !text.trim()) return;
+    const id = `comment-${Date.now()}`;
+    set(s => ({
+      comments: [...s.comments, { id, text: text.trim(), lat: pendingComment.lat, lng: pendingComment.lng }],
+      pendingComment: null,
+      commentMode: false,     // exit comment mode after posting
+    }));
+  },
+  cancelPendingComment() {
+    set({ pendingComment: null, editingCommentId: null });
+  },
+  deleteComment(id) {
+    set(s => ({
+      comments: s.comments.filter(c => c.id !== id),
+      activeCommentId: s.activeCommentId === id ? null : s.activeCommentId,
+    }));
+  },
+  startEditComment(id) {
+    const comment = get().comments.find(c => c.id === id);
+    if (!comment) return;
+    set({ editingCommentId: id, pendingComment: { lat: comment.lat, lng: comment.lng }, activeCommentId: null });
+  },
+  setActiveCommentId(id) {
+    set({ activeCommentId: id });
+  },
+
+  // ── Reply context
+  replyContext: null, // { id, text, lat, lng } — comment being replied to
+
+  setReplyContext(comment) {
+    set({ replyContext: comment, activeCommentId: null, commentMode: false });
+  },
+  clearReplyContext() {
+    set({ replyContext: null });
+  },
+
   // ── Circle draw
   drawMode:     false,
   activeCircle: null,
@@ -480,7 +587,14 @@ const useAppStore = create((set, get) => ({
 
   setMapInstance(map) {
     set({ mapInstance: map, mapReady: true });
-    google.maps.event.addListener(map, 'click',        () => get().closeCard());
+    google.maps.event.addListener(map, 'click', (e) => {
+      const { commentMode, setPendingComment, closeCard } = get();
+      if (commentMode) {
+        setPendingComment({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+      } else {
+        closeCard();
+      }
+    });
     google.maps.event.addListener(map, 'dragstart',    () => get().closeCard());
     google.maps.event.addListener(map, 'zoom_changed', () => get().closeCard());
   },

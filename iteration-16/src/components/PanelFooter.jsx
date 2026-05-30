@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import useAppStore from '../store/useAppStore.js';
+import imgRakshit from '../assets/rakshit.png';
 
 export default function PanelFooter() {
-  const submitFooter  = useAppStore(s => s.submitFooter);
-  const activeCircle  = useAppStore(s => s.activeCircle);
-  const clearCircle   = useAppStore(s => s.clearCircle);
-  const isThinking    = useAppStore(s => s.isThinking);
+  const submitFooter      = useAppStore(s => s.submitFooter);
+  const activeCircle      = useAppStore(s => s.activeCircle);
+  const clearCircle       = useAppStore(s => s.clearCircle);
+  const isThinking        = useAppStore(s => s.isThinking);
+  const replyContext      = useAppStore(s => s.replyContext);
+  const clearReplyContext = useAppStore(s => s.clearReplyContext);
   const [text, setText] = useState('');
 
   const placeholder = activeCircle
     ? 'Find things in this area…'
+    : replyContext
+    ? 'Add more context… (or just hit send)'
     : 'Show me hotels along my route';
 
   function handleSend() {
-    if (!text.trim() && !activeCircle) return;
+    if (!text.trim() && !activeCircle && !replyContext) return;
     submitFooter(text.trim());
     setText('');
   }
@@ -29,6 +34,18 @@ export default function PanelFooter() {
           </button>
         </div>
       </div>
+
+      {replyContext && (
+        <div className="reply-context-chip">
+          <img className="reply-chip-avatar" src={imgRakshit} alt="" />
+          <span className="reply-chip-label">Comment</span>
+          <span className="reply-chip-text">{replyContext.text}</span>
+          <button className="reply-chip-close" onClick={clearReplyContext}>
+            <span className="material-symbols-rounded">close</span>
+          </button>
+        </div>
+      )}
+
       <div className="footer-input-row">
         <div className="footer-input-wrap">
           <input

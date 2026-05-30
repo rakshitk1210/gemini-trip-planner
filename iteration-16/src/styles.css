@@ -797,12 +797,45 @@ body[data-state="route"] .map-view {
 .chat-chip:disabled { opacity: 0.45; cursor: default; }
 .chat-chip .material-symbols-rounded { font-size: 13px !important; }
 
+/* Per-turn map visibility header */
+.turn-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 8px;
+  border-bottom: 1px solid #e8eaed;
+  margin-bottom: 4px;
+}
+
+.turn-map-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+}
+
+.turn-map-toggle {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease;
+}
+.turn-map-toggle:hover { color: #202124; }
+.turn-map-toggle .material-symbols-rounded { font-size: 14px; }
+
 /* Card list inside a chat turn (bleeds to panel edges) */
 .chat-card-list {
   display: flex;
   flex-direction: column;
   margin: 0 -16px 0;
-  border-top: 1px solid #e8eaed;
 }
 /* Suggestion cards inherit all their existing styles */
 
@@ -1481,10 +1514,39 @@ body[data-state="route"] .map-view {
   align-items: center;
   padding: 8px;
   gap: 8px;
-  overflow: hidden;
 }
 
 .toolbar-card--tools { padding: 0; gap: 0; }
+
+/* Round first/last tool button hover to follow the card's border-radius */
+.toolbar-card--tools .toolbar-tip:first-child .toolbar-tool-btn { border-radius: 12px 12px 0 0; }
+.toolbar-card--tools .toolbar-tip:last-child  .toolbar-tool-btn { border-radius: 0 0 12px 12px; }
+.toolbar-card--tools .toolbar-tip:only-child  .toolbar-tool-btn { border-radius: 12px; }
+
+/* Tooltip wrapper — tooltip appears to the left */
+.toolbar-tip {
+  position: relative;
+}
+.toolbar-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #202124;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  z-index: 100;
+}
+.toolbar-tip:hover::after { opacity: 1; }
 
 .toolbar-zoom-btn {
   width: 24px; height: 24px;
@@ -1866,6 +1928,214 @@ body.draw-mode .map-area { cursor: crosshair; }
   color: #1a73e8 !important;
 }
 .toolbar-tool-btn--active .material-symbols-rounded { color: #1a73e8; }
+
+/* ══════════════════════════════════════════
+   COMMENTS
+══════════════════════════════════════════ */
+
+/* Saved comment dot — avatar photo in a circle */
+.comment-dot {
+  position: absolute;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  cursor: pointer;
+  pointer-events: auto;
+  overflow: hidden;
+  background: #e8eaed;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.comment-dot:hover {
+  transform: scale(1.12);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.comment-dot-avatar {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+/* Pending dot (waiting for input) */
+.comment-dot--pending {
+  position: absolute;
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* Input card — appears below the pending dot */
+.comment-input-card {
+  position: absolute;
+  width: 320px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.3), 0 1px 1.5px rgba(0,0,0,0.15);
+  padding: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 20;
+}
+.comment-textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  color: #202124;
+  line-height: 20px;
+  min-height: 20px;
+  max-height: 120px;
+  overflow-y: auto;
+  background: transparent;
+}
+.comment-textarea::placeholder { color: #9aa0a6; }
+.comment-send-btn {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #1a73e8;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  transition: background 0.12s;
+}
+.comment-send-btn .material-symbols-rounded { font-size: 15px; }
+.comment-send-btn:disabled { background: #bdc1c6; cursor: default; }
+.comment-send-btn:not(:disabled):hover { background: #1557b0; }
+
+/* Detail card — shown when a saved dot is clicked */
+.comment-detail-card {
+  position: absolute;
+  width: 320px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 2px rgba(0,0,0,0.12);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 20;
+}
+.comment-detail-text {
+  font-size: 16px;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  color: #202124;
+  line-height: 24px;
+}
+.comment-detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.comment-detail-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e8eaed;
+  flex-shrink: 0;
+}
+.comment-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.comment-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 24px; height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5f6368;
+  transition: color 0.12s;
+  flex-shrink: 0;
+}
+.comment-action-btn .material-symbols-rounded { font-size: 20px; }
+.comment-action-btn:hover { color: #3c4043; }
+.comment-action-btn--delete { color: #ea4335; }
+.comment-action-btn--delete:hover { color: #c5221f; }
+
+/* Reply pill button */
+.comment-reply-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #202124;
+  color: white;
+  border: none;
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.comment-reply-btn:hover { background: #3c4043; }
+.comment-reply-btn .material-symbols-rounded { font-size: 18px; }
+.comment-reply-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Reply context chip (above footer input) ── */
+.reply-context-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 8px;
+  border: 1px solid #dadce0;
+  border-radius: 999px;
+  background: white;
+  max-width: 100%;
+  overflow: hidden;
+}
+.reply-chip-avatar {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.reply-chip-label {
+  font-size: 14px;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  color: #202124;
+  flex-shrink: 0;
+}
+.reply-chip-text {
+  font-size: 13px;
+  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  color: #5f6368;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.reply-chip-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #5f6368;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.reply-chip-close .material-symbols-rounded { font-size: 18px; }
+.reply-chip-close:hover { color: #202124; }
 
 /* SVG overlay — covers entire map area */
 .circle-overlay {

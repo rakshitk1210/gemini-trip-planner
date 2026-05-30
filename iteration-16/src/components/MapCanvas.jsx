@@ -10,6 +10,7 @@ export default function MapCanvas() {
   const setMapInstance= useAppStore(s => s.setMapInstance);
   const aiPlaces      = useAppStore(s => s.aiPlaces);
   const activeCircle  = useAppStore(s => s.activeCircle);
+  const commentMode   = useAppStore(s => s.commentMode);
 
   // Register map instance in store; also locks/unlocks map when circle is active
   useEffect(() => {
@@ -24,6 +25,12 @@ export default function MapCanvas() {
       : { draggable: true,  scrollwheel: true,  disableDoubleClickZoom: false, gestureHandling: 'auto' }
     );
   }, [map, activeCircle]);
+
+  // Change cursor to crosshair in comment mode
+  useEffect(() => {
+    if (!map) return;
+    map.setOptions({ draggableCursor: commentMode ? 'crosshair' : '' });
+  }, [map, commentMode]);
 
   // Hooks that manage map overlays, directions, and place images
   useMapOverlays();

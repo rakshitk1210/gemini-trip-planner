@@ -19,6 +19,14 @@ export default function CircleOverlay({ mapAreaRef }) {
     }
   }, [activeCircle]);
 
+  // Escape key removes the active circle
+  useEffect(() => {
+    if (!activeCircle) return;
+    const onKey = (e) => { if (e.key === 'Escape') clearCircle(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [activeCircle, clearCircle]);
+
   return (
     <>
       <svg id="circleOverlay" className="circle-overlay">

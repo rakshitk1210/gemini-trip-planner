@@ -4,6 +4,7 @@ import useAppStore from '../store/useAppStore.js';
 import MapCanvas from './MapCanvas.jsx';
 import PlaceCard from './PlaceCard.jsx';
 import CircleOverlay from './CircleOverlay.jsx';
+import CommentOverlay from './CommentOverlay.jsx';
 import MapToolbar from './MapToolbar.jsx';
 import { MAP_STYLES } from '../constants.js';
 import imgRakshit  from '../assets/rakshit.png';
@@ -56,6 +57,7 @@ export default function MapArea() {
         styles={MAP_STYLES}
       >
         <MapCanvas />
+        <CommentOverlay />
       </Map>
 
       {/* SVG circle drawing overlay — absolutely positioned over map */}
