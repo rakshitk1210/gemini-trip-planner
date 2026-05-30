@@ -244,7 +244,6 @@ export default function CommentOverlay() {
             style={{
               left: Math.max(8, Math.min(pendingPos.x - 8, (document.getElementById('mapArea')?.offsetWidth ?? 800) - 328)),
               top:  pendingPos.y + 25,
-              alignItems: inputText.trim() ? 'flex-end' : 'center',
             }}
           >
             <textarea
