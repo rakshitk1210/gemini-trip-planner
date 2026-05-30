@@ -266,7 +266,7 @@ export default function CommentOverlay() {
               disabled={!inputText.trim()}
               onClick={handleSend}
             >
-              <span className="material-symbols-rounded">send</span>
+              <span className="material-symbols-rounded">arrow_upward</span>
             </button>
           </div>
         </>

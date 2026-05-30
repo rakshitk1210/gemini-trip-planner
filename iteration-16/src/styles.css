@@ -1975,11 +1975,11 @@ body.draw-mode .map-area { cursor: crosshair; }
   width: 320px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.3), 0 1px 1.5px rgba(0,0,0,0.15);
-  padding: 12px;
+  box-shadow: 0 2px 2px rgba(0,0,0,0.12);
+  padding: 12px 8px 12px 16px;
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
   z-index: 20;
 }
 .comment-textarea {
@@ -1987,19 +1987,19 @@ body.draw-mode .map-area { cursor: crosshair; }
   border: none;
   outline: none;
   resize: none;
-  font-size: 14px;
-  font-family: "Google Sans Text", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  font-family: "Google Sans", Roboto, Arial, sans-serif;
   color: #202124;
-  line-height: 20px;
-  min-height: 20px;
-  max-height: 120px;
+  line-height: 24px;
+  min-height: 24px;
+  max-height: 144px;
   overflow-y: auto;
   background: transparent;
 }
 .comment-textarea::placeholder { color: #9aa0a6; }
 .comment-send-btn {
   flex-shrink: 0;
-  width: 24px; height: 24px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: #1a73e8;
   border: none;
@@ -2008,7 +2008,7 @@ body.draw-mode .map-area { cursor: crosshair; }
   color: white;
   transition: background 0.12s;
 }
-.comment-send-btn .material-symbols-rounded { font-size: 15px; }
+.comment-send-btn .material-symbols-rounded { font-size: 18px; }
 .comment-send-btn:disabled { background: #bdc1c6; cursor: default; }
 .comment-send-btn:not(:disabled):hover { background: #1557b0; }
 
