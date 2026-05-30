@@ -91,6 +91,14 @@ function twoOpt(stops) {
   return route;
 }
 
+// Run 2-opt only on real route stops; comment-stop-* entries are preserved
+// but excluded from optimisation so they can't corrupt the visible stop order.
+function twoOptReal(stops) {
+  const real   = stops.filter(s => !s.id.startsWith('comment-stop-'));
+  const pinned = stops.filter(s =>  s.id.startsWith('comment-stop-'));
+  return [...twoOpt(real), ...pinned];
+}
+
 function circleCenter(circle, mapInstance) {
   if (!circle || !mapInstance) return null;
   try {
@@ -404,7 +412,7 @@ const useAppStore = create((set, get) => ({
     const idx = insertAt !== undefined ? Math.min(insertAt, routeStops.length) : bestInsertIndex(routeStops, sugg);
     const next = [...routeStops];
     next.splice(idx, 0, { ...sugg });
-    set({ routeStops: twoOpt(next) });
+    set({ routeStops: twoOptReal(next) });
   },
 
   removeStop(id) {
@@ -548,12 +556,11 @@ const useAppStore = create((set, get) => ({
       desc:     'Comment location',
       seed:     42,
     };
+    // Append without optimisation — comment-stops don't affect the visible
+    // polyline, so there's no value running twoOpt over them.
     set(s => {
       if (s.routeStops.find(r => r.id === stop.id)) return {};
-      const idx = bestInsertIndex(s.routeStops, stop);
-      const next = [...s.routeStops];
-      next.splice(idx, 0, stop);
-      return { routeStops: twoOpt(next) };
+      return { routeStops: [...s.routeStops, stop] };
     });
   },
 
