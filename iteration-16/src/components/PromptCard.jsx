@@ -26,7 +26,7 @@ export default function PromptCard() {
           ref={promptRef}
           onKeyDown={handleKeyDown}
         >
-          Explore Seattle on a 2-day road trip, discovering iconic landmarks, vibrant neighborhoods, and scenic views along the way.
+          Explore Iceland on a 2-day road trip, discovering iconic landmarks, vibrant neighborhoods, and scenic views along the way.
         </p>
       </div>
       <div className="prompt-actions">

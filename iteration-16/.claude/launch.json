@@ -4,7 +4,7 @@
     {
       "name": "iteration-16",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["/tmp/vite-runner.cjs", "--port", "3016", "--host"],
+      "runtimeArgs": ["/tmp/serve-iter16.js"],
       "port": 3016
     }
   ]

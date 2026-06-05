@@ -214,7 +214,7 @@ const useAppStore = create((set, get) => ({
       console.error('Claude error:', err);
       set(s => ({
         chatTurns: s.chatTurns.map(t => t.id === turnId
-          ? { ...t, isThinking: false, error: "Couldn't reach Claude — showing sample places." }
+          ? { ...t, isThinking: false, error: "Can't reach AI systems right now — showing sample places." }
           : t),
         aiPlaces: SUGGESTIONS,
       }));
@@ -298,7 +298,7 @@ const useAppStore = create((set, get) => ({
         isThinking: false,
         conversationHistory: s.conversationHistory.slice(0, -1),
         chatTurns: s.chatTurns.map(t => t.id === turnId
-          ? { ...t, isThinking: false, error: "Couldn't reach Claude — try again." }
+          ? { ...t, isThinking: false, error: "Can't reach AI systems right now — try again." }
           : t),
       }));
       return;
