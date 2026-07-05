@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { callClaude } from '../api/gemini.js';
+import { callAI } from '../api/gemini.js';
 import { SUGGESTIONS, haversineKm } from '../constants.js';
 
 let turnIdCounter = 0;
@@ -209,9 +209,9 @@ const useAppStore = create((set, get) => ({
 
     let places;
     try {
-      places = await callClaude([{ role: 'user', text }]);
+      places = await callAI([{ role: 'user', text }]);
     } catch (err) {
-      console.error('Claude error:', err);
+      console.error('AI error:', err);
       set(s => ({
         chatTurns: s.chatTurns.map(t => t.id === turnId
           ? { ...t, isThinking: false, error: "Can't reach AI systems right now — showing sample places." }
@@ -291,9 +291,9 @@ const useAppStore = create((set, get) => ({
 
     let places;
     try {
-      places = await callClaude(get().conversationHistory);
+      places = await callAI(get().conversationHistory);
     } catch (err) {
-      console.error('Claude error:', err);
+      console.error('AI error:', err);
       set(s => ({
         isThinking: false,
         conversationHistory: s.conversationHistory.slice(0, -1),
