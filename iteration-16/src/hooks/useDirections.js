@@ -2,21 +2,11 @@ import { useEffect, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
 import useAppStore from '../store/useAppStore.js';
 
-function drawStraightPolyline(map, stops) {
-  return new google.maps.Polyline({
-    path:          stops.map(s => ({ lat: s.lat, lng: s.lng })),
-    strokeColor:   '#1a73e8',
-    strokeWeight:  3,
-    strokeOpacity: 0.7,
-    geodesic:      true,
-    map,
-    zIndex: 5,
-  });
-}
+const ROUTE_COLOR = '#1a73e8';
 
 function animatePolyline(map, fullPath, polyRef) {
   polyRef.current = new google.maps.Polyline({
-    path: [fullPath[0]], strokeColor: '#1a73e8', strokeWeight: 3, strokeOpacity: 0.9, map, zIndex: 5,
+    path: [fullPath[0]], strokeColor: ROUTE_COLOR, strokeWeight: 3, strokeOpacity: 0.9, map, zIndex: 5,
   });
   const chunkSize = Math.max(1, Math.ceil(fullPath.length / 80));
   let i = 1;
@@ -28,6 +18,27 @@ function animatePolyline(map, fullPath, polyRef) {
     if (i < fullPath.length) setTimeout(extend, 16);
   };
   setTimeout(extend, 100);
+}
+
+// One DirectionsService call. Resolves with the road-following path (array of
+// LatLng) on success, or null if this request can't be routed.
+function routeRequest(svc, request) {
+  return new Promise(resolve => {
+    svc.route(request, (result, status) => {
+      resolve(status === 'OK' ? result.routes[0].overview_path : null);
+    });
+  });
+}
+
+const latLng = s => new google.maps.LatLng(s.lat, s.lng);
+
+// Route a single leg between two stops: DRIVING, then WALKING, then null.
+async function routeLeg(svc, a, b) {
+  const base = { origin: latLng(a), destination: latLng(b) };
+  return (
+    await routeRequest(svc, { ...base, travelMode: google.maps.TravelMode.DRIVING }) ||
+    await routeRequest(svc, { ...base, travelMode: google.maps.TravelMode.WALKING })
+  );
 }
 
 export default function useDirections() {
@@ -42,33 +53,41 @@ export default function useDirections() {
     const visibleStops = routeStops.filter(s => !s.id.startsWith('comment-stop-'));
     if (!map || visibleStops.length < 2) return;
 
-    const svc      = new google.maps.DirectionsService();
-    const origin   = new google.maps.LatLng(visibleStops[0].lat, visibleStops[0].lng);
-    const dest     = new google.maps.LatLng(visibleStops[visibleStops.length - 1].lat, visibleStops[visibleStops.length - 1].lng);
-    const waypoints = visibleStops.slice(1, -1).map(s => ({
-      location: new google.maps.LatLng(s.lat, s.lng), stopover: true,
-    }));
+    let cancelled = false;
+    const svc = new google.maps.DirectionsService();
 
-    const baseRequest = { origin, destination: dest, waypoints, optimizeWaypoints: false, avoidFerries: false };
-
-    const tryMode = (mode, onFail) => {
-      svc.route({ ...baseRequest, travelMode: mode }, (result, status) => {
-        if (status === 'OK') {
-          animatePolyline(map, result.routes[0].overview_path, polyRef);
-        } else {
-          console.warn(`DirectionsService ${mode} failed (${status}):`, visibleStops.map(s => `${s.name} (${s.lat.toFixed(3)},${s.lng.toFixed(3)})`));
-          onFail();
-        }
+    (async () => {
+      // Fast path: one multi-waypoint DRIVING request for the whole route.
+      const waypoints = visibleStops.slice(1, -1).map(s => ({ location: latLng(s), stopover: true }));
+      const full = await routeRequest(svc, {
+        origin:            latLng(visibleStops[0]),
+        destination:       latLng(visibleStops[visibleStops.length - 1]),
+        waypoints,
+        optimizeWaypoints: false,
+        travelMode:        google.maps.TravelMode.DRIVING,
       });
-    };
+      if (cancelled) return;
+      if (full) { animatePolyline(map, full, polyRef); return; }
 
-    // Try DRIVING → fallback WALKING → fallback straight line
-    tryMode(google.maps.TravelMode.DRIVING, () =>
-      tryMode(google.maps.TravelMode.WALKING, () => {
-        polyRef.current = drawStraightPolyline(map, visibleStops);
-      })
-    );
+      // Robust path: the combined request failed (typically ZERO_RESULTS because
+      // one AI-supplied coordinate is off-road — a glacier, park interior, etc.).
+      // Route each leg independently so a single unroutable stop only degrades its
+      // own segment instead of collapsing the entire route to straight lines.
+      const fullPath = [];
+      for (let k = 0; k < visibleStops.length - 1; k++) {
+        const a = visibleStops[k], b = visibleStops[k + 1];
+        const leg = await routeLeg(svc, a, b);
+        if (cancelled) return;
+        if (!leg) console.warn(`Route segment unroutable, drawing straight line: ${a.name} → ${b.name}`);
+        const segPath = leg ? leg.slice() : [latLng(a), latLng(b)];
+        // Drop the shared endpoint so consecutive legs don't duplicate a vertex.
+        if (k > 0) segPath.shift();
+        fullPath.push(...segPath);
+      }
+      if (cancelled || fullPath.length < 2) return;
+      animatePolyline(map, fullPath, polyRef);
+    })();
 
-    return () => { polyRef.current?.setMap(null); polyRef.current = null; };
+    return () => { cancelled = true; polyRef.current?.setMap(null); polyRef.current = null; };
   }, [map, routeStops]);
 }
