@@ -1,6 +1,5 @@
-export const MAPS_API_KEY   = import.meta.env.VITE_MAPS_API_KEY;
-export const ANTHROPIC_KEY  = import.meta.env.VITE_ANTHROPIC_KEY;
-export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+export const MAPS_API_KEY  = import.meta.env.VITE_MAPS_API_KEY;
+export const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY;
 
 export const SUGGESTIONS = [
   { id: 'sc1', name: 'Þingvellir',       category: 'scenic',     lat: 64.2558, lng: -21.1296, seed: 101, rating: 4.8, desc: 'UNESCO World Heritage Site where the North American and Eurasian tectonic plates meet.' },

@@ -1,7 +1,6 @@
-import { ANTHROPIC_KEY, GEMINI_API_KEY } from '../constants.js';
+import { ANTHROPIC_KEY } from '../constants.js';
 
 const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 const SYSTEM_PROMPT = `You are a Google Maps travel planner. Return ONLY a raw JSON array — no markdown fences, no explanation, nothing else.
 
@@ -44,7 +43,7 @@ export async function callClaude(history) {
       'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model:      'claude-haiku-4-5-20251001',
+      model:      'claude-haiku-4-5',
       max_tokens: 2048,
       system:     SYSTEM_PROMPT,
       messages,
@@ -59,43 +58,4 @@ export async function callClaude(history) {
   if (data.stop_reason === 'max_tokens') console.warn('Claude: response truncated at max_tokens');
   const raw = data.content?.[0]?.text ?? '[]';
   return parsePlaces(raw);
-}
-
-// Gemini fallback — same history shape, roles mapped to Gemini's user|model
-export async function callGemini(history) {
-  const contents = history.map(m => ({
-    role:  m.role === 'assistant' ? 'model' : m.role,
-    parts: [{ text: m.text }],
-  }));
-
-  const resp = await fetch(GEMINI_URL, {
-    method:  'POST',
-    headers: {
-      'content-type':   'application/json',
-      'x-goog-api-key': GEMINI_API_KEY,
-    },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents,
-    }),
-  });
-
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => '');
-    throw new Error(`Gemini HTTP ${resp.status}: ${body.slice(0, 200)}`);
-  }
-  const data = await resp.json();
-  const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
-  return parsePlaces(raw);
-}
-
-// Unified entry point: Claude primary, Gemini fallback.
-export async function callAI(history) {
-  try {
-    return await callClaude(history);
-  } catch (claudeErr) {
-    console.warn('Claude failed, trying Gemini fallback:', claudeErr.message);
-    if (!GEMINI_API_KEY) throw claudeErr;
-    return await callGemini(history);
-  }
 }
